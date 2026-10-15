@@ -46,7 +46,16 @@ def assess(req: AssessRequest, request: Request):
              "retry_after": wait}, status_code=429)
     _RATE[ip] = now
     try:
-        result = run_pipeline(req.address)
+        # 熔断：pipeline 最多跑 100 秒，超时返回 504 而不是无限挂起
+        import concurrent.futures as _cf
+        with _cf.ThreadPoolExecutor(max_workers=1) as _pool:
+            fut = _pool.submit(run_pipeline, req.address)
+            try:
+                result = fut.result(timeout=100)
+            except _cf.TimeoutError:
+                return JSONResponse(
+                    {"error": "评估超时（上游数据接口响应过慢），请稍后重试"},
+                    status_code=504)
         return JSONResponse(result)
     except ValueError as e:
         return JSONResponse({"error": str(e)}, status_code=400)
