@@ -48,16 +48,31 @@ def _open_meteo(address: str) -> dict | None:
             "lon": r["longitude"], "admin": admin, "display": ""}
 
 
+def _variants(address: str) -> list[str]:
+    """查询变体：完整地址 -> 前3字 -> 前2字（城市级兜底）。"""
+    v = [address]
+    if len(address) > 3:
+        v.append(address[:3])
+    if len(address) > 2:
+        v.append(address[:2])
+    return v
+
+
 def geocode(address: str, timeout: int = 20) -> dict | None:
     """返回 {"name", "lat", "lon", "admin"}，失败返回 None。"""
-    try:
-        r = _nominatim(address)
-        if r:
-            return r
-    except Exception:
-        pass
-    time.sleep(1.1)  # Nominatim 限速要求
-    try:
-        return _open_meteo(address)
-    except Exception:
-        return None
+    for q in _variants(address):
+        try:
+            r = _nominatim(q)
+            if r:
+                return r
+        except Exception:
+            pass
+        time.sleep(1.1)  # Nominatim 限速要求
+    for q in _variants(address):
+        try:
+            r = _open_meteo(q)
+            if r:
+                return r
+        except Exception:
+            pass
+    return None
