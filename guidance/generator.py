@@ -42,20 +42,30 @@ def _call_llm(system: str, user: str) -> str:
     return data["choices"][0]["message"]["content"]
 
 
-def _template_guidance(risk: dict, community: dict, zone: dict) -> dict:
-    """降级模板：把风险数据拼进固定话术。"""
-    header = FALLBACK_HEADER
+def _template_guidance(risk: dict, community: dict, zone: dict, context: dict) -> dict:
+    """降级模板：风险等级定制 + 数据驱动开头，不说空话。"""
+    level = risk["level"]
     items = {k: list(v) for k, v in FALLBACK_TEMPLATES.items()}
-    # 按风险等级追加一条定制提醒
-    extra = {
-        "极高": "本小区风险极高，请务必提前联系社区确认避险安置点位置",
-        "高": "本小区风险较高，建议提前规划好紧急转移路线",
-        "中": "保持关注预报更新，雨势加大时再升级防范",
-        "低": "常规防范即可，留意预报变化",
-    }.get(risk["level"], "")
-    if extra:
-        items["72h"] = [extra] + items["72h"]
-    return {"mode": "template", "header": header, "timelines": items}
+    # 各等级优先动作，插到 72h 最前面
+    priority = {
+        "极高": ["立即联系社区确认避险安置点位置和转移路线",
+                 "一楼住户今晚前把贵重物品搬到高处"],
+        "高": ["提前规划紧急转移路线并告知家人",
+               "24小时内把地下车库车辆移到高处"],
+        "中": ["关注预报更新，雨势加大时升级防范"],
+        "低": ["常规防范即可，留意预报变化"],
+    }.get(level, [])
+    if priority:
+        items["72h"] = priority + items["72h"]
+    # 低风险时精简 6h 清单，避免制造恐慌
+    if level == "低":
+        items["6h"] = ["台风对本小区影响较小，6小时内无特殊行动，保持关注即可"]
+    summary = (f"{risk['typhoon_name']}未来72小时最近距本小区约 "
+               f"{context['min_dist_km']:.0f} 公里，"
+               f"最大风速 {context['max_wind_ms']:.0f} 米/秒，"
+               f"未来3天最大24小时降雨 {context['max_rain_mm']:.0f} 毫米。")
+    return {"mode": "template", "header": FALLBACK_HEADER,
+            "summary": summary, "timelines": items}
 
 
 def generate(risk: dict, community: dict, zone: dict, context: dict) -> dict:
@@ -78,7 +88,7 @@ def generate(risk: dict, community: dict, zone: dict, context: dict) -> dict:
             return {"mode": "llm", "header": "（AI 生成版指引）", "text": text}
         except Exception as e:
             # LLM 调用失败也降级，不让整条链路挂掉
-            result = _template_guidance(risk, community, zone)
+            result = _template_guidance(risk, community, zone, context)
             result["header"] += f"；LLM 调用失败（{e}）"
             return result
-    return _template_guidance(risk, community, zone)
+    return _template_guidance(risk, community, zone, context)

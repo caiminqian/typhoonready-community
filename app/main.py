@@ -7,6 +7,7 @@ import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from data_ingest import terrain
@@ -18,6 +19,7 @@ _RATE_WINDOW = 60.0
 
 app = FastAPI(title="AI4Climate Track05 原型：台风-内涝社区韧性指引")
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 class AssessRequest(BaseModel):
