@@ -19,7 +19,7 @@ select { width: 60%;} button { background: #1a73e8; color: #fff; border: none; c
 </head>
 <body>
 <h1>🌪️ 社区防台小助手 <span class="hint">TyphoonReady Community · AI4Climate Track05</span></h1>
-<div class="note">📦 静态演示版：以下为 <b>台风贝碧嘉（2024）真实路径复盘</b> 的预计算结果（IBTrACS 最佳路径 + ERA5 降雨再分析）。完整可运行版本（含实时数据）见 <a href="https://github.com/caiminqian/typhoonready-community">GitHub 仓库</a>。</div>
+<div class="note">🤖 AI 演示版：以下为 <b>台风贝碧嘉（2024）真实路径复盘</b> 的评估结果（IBTrACS 最佳路径 + ERA5 降雨再分析），行动指引由大模型生成。完整可运行版本（含实时数据）见 <a href="https://github.com/caiminqian/typhoonready-community">GitHub 仓库</a>。</div>
 <div class="card">
 <p class="hint">选择示例小区，查看复盘评估结果：</p>
 <select id="sel"></select>
@@ -47,10 +47,14 @@ let html = '<div class="card"><h2>' + esc(d.name) + '</h2>'
 + '<p class="hint">复盘案例：台风贝碧嘉（2024）· 数据来源：台风(' + d.data_sources.typhoon + ') / 降雨(' + d.data_sources.rainfall + ')</p>';
 risk.factors.forEach(f => { html += '<div class="factor">· ' + esc(f.name) + '：<b>' + f.score + '/' + f.max + '</b> —— ' + esc(f.reason) + '</div>';});
 html += '</div><div class="card timeline"><h2>居民行动指引</h2><p class="hint">' + esc(g.header) + '</p>';
-const names = {'72h': '未来72小时', '24h': '未来24小时', '6h': '未来6小时'};
-['72h','24h','6h'].forEach(k2 => {
-html += '<h3></h3><ol>' + g.timelines[k2].map(t => '<li>' + esc(t) + '</li>').join('') + '</ol>';
-});
+if (g.mode === 'llm' && g.text) {
+  html += '<div style="white-space:pre-wrap;line-height:1.7">' + esc(g.text) + '</div>';
+} else {
+  const names = {'72h': '未来72小时', '24h': '未来24小时', '6h': '未来6小时'};
+  ['72h','24h','6h'].forEach(k2 => {
+    html += '<h3>【' + names[k2] + '】</h3><ol>' + g.timelines[k2].map(t => '<li>' + esc(t) + '</li>').join('') + '</ol>';
+  });
+}
 document.getElementById('result').innerHTML = html + '</div>';
 }
 </script>
