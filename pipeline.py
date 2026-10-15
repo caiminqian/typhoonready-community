@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from data_ingest.rainfall import RainfallFetcher
 from data_ingest import terrain
+from data_ingest.geocode import geocode
 from data_ingest.typhoon import TyphoonFetcher
 from guidance.generator import generate
 from risk_engine.scorer import assess, haversine_km
@@ -24,9 +25,19 @@ def run_pipeline(address: str, typhoon_mode: str = "live",
                  rain_end: str | None = None) -> dict:
     """输入地址（小区名关键字），输出完整评估结果。"""
     community = terrain.find_community(address)
+    terrain_source = "mock"
     if community is None:
-        supported = [c["name"] for c in terrain.list_communities()]
-        raise ValueError(f"未识别的小区：{address}；当前示例小区：{supported}")
+        # 兜底：任意地址走地理编码，内涝底图用默认估计值并如实标注
+        geo = geocode(address)
+        if geo is None:
+            supported = [c["name"] for c in terrain.list_communities()]
+            raise ValueError(f"无法定位：{address}；可试示例小区：{supported}")
+        community = {
+            "id": f"geo-{geo['lat']:.2f}-{geo['lon']:.2f}",
+            "name": f"{geo['name']}（{geo['admin']}）" if geo["admin"] else geo["name"],
+            "address": address, "lat": geo["lat"], "lon": geo["lon"],
+        }
+        terrain_source = "estimated"
 
     # 1) 数据接入（真实接口优先，失败自动回退 mock）
     typhoon = TyphoonFetcher().fetch(mode=typhoon_mode, case=replay_case)
@@ -34,6 +45,9 @@ def run_pipeline(address: str, typhoon_mode: str = "live",
         lat=community["lat"], lon=community["lon"],
         start_date=rain_start, end_date=rain_end)
     zone = terrain.get_flood_zone(community["id"])
+    if terrain_source == "estimated":
+        zone = {"zone_level": 1, "elevation_m": 5.0,
+                "history": "该地址无内置内涝底图，地形分按默认估计值计算，仅供参考"}
 
     # 2) 复合风险评分
     risk = assess(typhoon.data, rainfall.data, zone, community["lat"], community["lon"])
@@ -58,7 +72,7 @@ def run_pipeline(address: str, typhoon_mode: str = "live",
         "data_sources": {
             "typhoon": typhoon.source,
             "rainfall": rainfall.source,
-            "terrain": "mock",
+            "terrain": terrain_source,
         },
         "data_notes": [n for n in (typhoon.note, rainfall.note) if n],
     }
