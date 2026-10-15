@@ -2,6 +2,11 @@
 
 一句话：输入小区名，系统融合台风路径预报、降雨预报、地形内涝风险，输出复合风险评分 + AI 生成的居民可行动应急指引（72h / 24h / 6h 三条时间线）。
 
+## 在线体验
+
+- **Live 服务**：https://typhoonready.onrender.com（实时台风+实时降雨，免费版冷启动约 30 秒）
+- **静态演示**：https://caiminqian.github.io/typhoonready-community/（贝碧嘉 2024 复盘预计算结果）
+
 ## 本地运行（3 步）
 
 ```bash
@@ -9,6 +14,8 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 # 方式一：命令行一键演示（纯离线）
 python run_demo.py --address 繁裕小区
+# 贝碧嘉 2024 真实复盘（IBTrACS 路径 + ERA5 降雨）
+python run_demo.py --replay --address 浦东新区临港新城书院社区
 # 方式二：Web demo
 uvicorn app.main:app --host 127.0.0.1 --port 8000
 # 浏览器打开 http://127.0.0.1:8000
@@ -38,12 +45,18 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 ## 模块说明
 
-- `data_ingest/`：台风路径 / 降雨预报 / 内涝底图接入。真实接口（中央气象台、Open-Meteo）以 TODO 占位，当前全部走 `data/mock/` 内置数据，保证评审离线可跑。
+- `data_ingest/`：台风路径 / 降雨预报 / 内涝底图 / 地理编码。
+  台风走中央气象台台风网实时接口（含 BABJ 官方预报路径），无活跃台风时回退 mock；
+  降雨走 Open-Meteo（429 时切 7timer 备用源），3 小时进程缓存；
+  任意地址经 Nominatim + Open-Meteo geocoding 解析；
+  内涝底图为静态（等级/高程/历史涝点），降雨实时放大（详见 DESIGN.md）。
+  外部调用失败自动回退 mock，离线可跑。
 - `risk_engine/`：复合风险评分，台风接近度 40 分 + 降雨强度 30 分 + 地形内涝 30 分，规则显式可解释。
 - `guidance/`：指引生成。配置 `AI4C_LLM_API_KEY`（OpenAI 兼容接口）则调 LLM；无 key 时用规则模板降级，离线也有完整输出。
   环境变量：`AI4C_LLM_API_KEY` / `AI4C_LLM_BASE_URL`（默认 https://api.openai.com/v1）/ `AI4C_LLM_MODEL`（默认 gpt-4o-mini）。
   已验证：商汤 SenseNova（`AI4C_LLM_BASE_URL=https://token.sensenova.cn/v1`，`AI4C_LLM_MODEL=sensenova-6.8-flash-lite`）、Qwen2.5-7B（SiliconFlow）、DeepSeek API。
-- `app/`：FastAPI Web demo；`run_demo.py`：CLI 一键演示。
+- `app/`：FastAPI Web demo（Leaflet 台风路径地图、贝碧嘉一键复盘按钮、IP 限流 60 秒/次、pipeline 100 秒熔断）；
+  `run_demo.py`：CLI 一键演示；`analysis/`：40/30/30 权重敏感性分析（脚本+报告+图表）。
 
 ## AI 必不可少的论证
 
@@ -52,3 +65,4 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 ## 评审离线说明
 
 全链路默认走内置 mock 数据，无需联网、无需 key 即可看到完整流程：风险评分 → 分项解释 → 三条时间线指引。
+联网时自动切换实时数据源（台风/降雨/地理编码），并在页面标注数据来源（live/mock）。
