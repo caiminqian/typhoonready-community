@@ -15,13 +15,39 @@ from datetime import datetime, timezone, timedelta
 
 from .base import BaseFetcher
 
-UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AI4Climate-Demo"}
+UA = {"User-Agent": "typhoonready/1.0 (AI4Climate demo; contact: via GitHub typhoonready-community)"}
+
+# 进程内缓存：同一坐标（0.1° 网格）3 小时内复用，应对免费接口按 IP 限流
+_CACHE: dict[str, tuple[float, dict]] = {}
+_CACHE_TTL = 3 * 3600
 
 
-def _get_json(url: str) -> dict:
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=25) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+def _get_json(url: str, retries: int = 2) -> dict:
+    import time
+    import urllib.error
+    last = None
+    for attempt in range(retries):
+        try:
+            req = urllib.request.Request(url, headers=UA)
+            with urllib.request.urlopen(req, timeout=25) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            last = e
+            if e.code == 429 and attempt < retries - 1:
+                # 尊重 Retry-After（最多等 10 秒），否则指数退避
+                wait = e.headers.get("Retry-After")
+                try:
+                    delay = min(float(wait), 10) if wait else 2 * (attempt + 1)
+                except ValueError:
+                    delay = 2 * (attempt + 1)
+                time.sleep(delay)
+                continue
+            raise
+    raise last
+
+
+def _cache_key(lat: float, lon: float, start: str | None, end: str | None) -> str:
+    return f"{round(lat, 1)},{round(lon, 1)},{start or ''},{end or ''}"
 
 
 class RainfallFetcher(BaseFetcher):
@@ -41,15 +67,25 @@ class RainfallFetcher(BaseFetcher):
                                note=f"真实接口不可用（{e}），已回退内置 mock 数据")
 
     def _fetch_live(self, **kwargs) -> dict:
+        import time
         lat = kwargs.get("lat")
         lon = kwargs.get("lon")
         if lat is None or lon is None:
             raise RuntimeError("缺少经纬度参数")
         start = kwargs.get("start_date")
         end = kwargs.get("end_date")
+        key = _cache_key(lat, lon, start, end)
+        hit = _CACHE.get(key)
+        if hit and time.time() - hit[0] < _CACHE_TTL:
+            data = dict(hit[1])
+            data["note"] += "（3 小时内缓存）"
+            return data
         if start and end:
-            return self._fetch_archive(lat, lon, start, end)
-        return self._fetch_forecast(lat, lon)
+            data = self._fetch_archive(lat, lon, start, end)
+        else:
+            data = self._fetch_forecast(lat, lon)
+        _CACHE[key] = (time.time(), data)
+        return data
 
     def _fetch_forecast(self, lat: float, lon: float) -> dict:
         q = urllib.parse.urlencode({
