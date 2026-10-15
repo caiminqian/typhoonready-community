@@ -51,7 +51,11 @@ async function assess() {
       body: JSON.stringify({address: document.getElementById('addr').value})
     });
     const d = await r.json();
-    if (!r.ok) { box.innerHTML = '<div class="card">❌ ' + d.error + '</div>'; return; }
+    if (!r.ok) {
+      if (r.status === 429) { box.innerHTML = '<div class="card">⏳ ' + d.error + '</div>'; }
+      else { box.innerHTML = '<div class="card">❌ ' + d.error + '</div>'; }
+      return;
+    }
     const risk = d.risk, g = d.guidance;
     let html = '<div class="card"><h2>' + d.community.name + '</h2>'
       + '<p>综合风险：<b>' + risk.score + ' 分</b> <span class="badge level-' + risk.level + '">' + risk.level + '风险</span></p>'

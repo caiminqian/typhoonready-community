@@ -66,13 +66,29 @@ def score_rainfall(daily: list[dict]) -> tuple[float, str]:
     return score, reason
 
 
-def score_terrain(zone: dict) -> tuple[float, str]:
-    """地形内涝评分（满分 30）：内涝风险等级 + 历史内涝记录。"""
+def score_terrain(zone: dict, max_rain_mm: float = 0) -> tuple[float, str]:
+    """地形内涝评分（满分 30）：静态底图分 + 实时降雨放大。
+
+    内涝底图（等级/高程/历史）是静态的、没有公开实时接口；
+    动态部分来自实时降雨预报：预报雨越大，低洼小区的内涝分放大越多。
+    复盘模式（雨量 <50mm）加成0，历史演示数字不受影响。
+    """
     level = int(zone.get("zone_level", 0))
-    score = {3: 30.0, 2: 20.0, 1: 10.0}.get(level, 3.0)
+    base = {3: 30.0, 2: 20.0, 1: 10.0}.get(level, 3.0)
+    if max_rain_mm >= 150:
+        bonus = 10.0
+    elif max_rain_mm >= 100:
+        bonus = 6.0
+    elif max_rain_mm >= 50:
+        bonus = 3.0
+    else:
+        bonus = 0.0
+    score = min(30.0, base + bonus)
     history = zone.get("history", "")
-    reason = f"小区内涝风险 {level} 级（0-3 级），高程 {zone.get('elevation_m', '?')} 米；{history}"
-    return score, reason
+    reason = (f"小区内涝风险 {level} 级（0-3 级），高程 {zone.get('elevation_m', '?')} 米；{history}"
+              + (f"；叠加未来 3 天最大 {max_rain_mm:.0f} 毫米降雨，地形分 +{bonus:.0f}（实时降雨放大）"
+                 if bonus else ""))
+    return round(score, 1), reason
 
 
 def level_of(score: float) -> str:
@@ -89,7 +105,8 @@ def assess(typhoon: dict, rainfall: dict, zone: dict, lat: float, lon: float) ->
     """主入口：返回包含分项解释的风险报告。"""
     s1, r1 = score_typhoon(typhoon.get("points", []), lat, lon)
     s2, r2 = score_rainfall(rainfall.get("daily", []))
-    s3, r3 = score_terrain(zone)
+    max_rain = max((d.get("mm_24h", 0) for d in rainfall.get("daily", [])), default=0)
+    s3, r3 = score_terrain(zone, max_rain)
     total = round(s1 + s2 + s3, 1)
     return {
         "score": total,
