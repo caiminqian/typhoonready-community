@@ -3,77 +3,177 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>台风-内涝社区韧性指引 · AI4Climate Track05 原型</title>
+<title>社区防台小助手 · AI4Climate Track05</title>
 <style>
-  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 760px; margin: 0 auto; padding: 24px; background: #f5f7fa; color: #222; }
-  h1 { font-size: 22px; }
-  .card { background: #fff; border-radius: 10px; padding: 18px; margin: 14px 0; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-  .level-极高 { color: #fff; background: #c0392b; } .level-高 { color: #fff; background: #e67e22; }
-  .level-中 { color: #fff; background: #d4a017; } .level-低 { color: #fff; background: #27ae60; }
-  .badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-weight: bold; }
-  input, button { font-size: 16px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
-  input { width: 60%; } button { background: #1a73e8; color: #fff; border: none; cursor: pointer; }
-  button:disabled { background: #999; }
-  .factor { margin: 6px 0; } .timeline h3 { margin: 12px 0 6px; } li { margin: 4px 0; }
-  .hint { color: #666; font-size: 13px; }
-  .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid #dfe6f0;
-    border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.9s linear infinite;
-    vertical-align: -3px; margin-right: 8px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .elapsed { color: #1a73e8; font-weight: bold; }
+* { box-sizing: border-box;}
+body { font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+margin: 0; background: #eef2f7; color: #1f2a3a;}
+.hero { background: linear-gradient(135deg, #0f2a4a 0%, #1a5c9e 60%, #2a86d4 100%);
+color: #fff; padding: 34px 20px 28px; text-align: center;}
+.hero h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: 1px;}
+.hero p { margin: 0; font-size: 13px; opacity:.82;}
+.wrap { max-width: 720px; margin: -18px auto 40px; padding: 0 14px;}
+.card { background: #fff; border-radius: 14px; padding: 20px; margin: 14px 0;
+box-shadow: 0 2px 12px rgba(15,42,74,.08);}
+.search-row { display: flex; gap: 10px;}
+input { flex: 1; font-size: 16px; padding: 12px 14px; border-radius: 10px;
+border: 1.5px solid #d5dde8; outline: none; min-width: 0;}
+input:focus { border-color: #2a86d4;}
+button.go { font-size: 16px; padding: 12px 22px; border-radius: 10px; border: none;
+background: #1a73e8; color: #fff; cursor: pointer; font-weight: 600; white-space: nowrap;}
+button.go:disabled { background: #9db4cc; cursor: default;}
+.chips { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;}
+.chip { font-size: 13px; padding: 6px 12px; border-radius: 20px; background: #eaf1fa;
+color: #1a5c9e; border: none; cursor: pointer;}
+.chip:hover { background: #d6e6f8;}
+.hint { color: #7a8799; font-size: 13px;}
+/* 仪表盘 */
+.gauge-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap;}
+.gauge { position: relative; width: 150px; height: 150px; flex-shrink: 0;}
+.gauge svg { transform: rotate(-90deg);}
+.gauge .num { position: absolute; inset: 0; display: flex; flex-direction: column;
+align-items: center; justify-content: center;}
+.gauge .num b { font-size: 38px; line-height: 1;}
+.gauge .num span { font-size: 12px; color: #7a8799; margin-top: 4px;}
+.badge { display: inline-block; padding: 5px 16px; border-radius: 20px; font-weight: bold;
+font-size: 15px; color: #fff;}
+.level-极高 { background: #c0392b;}.level-高 { background: #e67e22;}
+.level-中 { background: #d4a017;}.level-低 { background: #27ae60;}
+.c-极高 { color: #c0392b;}.c-高 { color: #e67e22;}.c-中 { color: #b8860b;}.c-低 { color: #27ae60;}
+/* 因子条 */
+.factor { margin: 12px 0;}
+.factor.row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px;}
+.bar { height: 10px; border-radius: 6px; background: #edf1f6; overflow: hidden;}
+.bar i { display: block; height: 100%; border-radius: 6px;
+background: linear-gradient(90deg, #2a86d4, #1a5c9e);
+transition: width 1s cubic-bezier(.22,.8,.3,1); width: 0;}
+.factor.why { font-size: 12.5px; color: #7a8799; margin-top: 4px;}
+.src { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;}
+.pill { font-size: 12px; padding: 4px 10px; border-radius: 12px; background: #eef4fb; color: #47617e;}
+.pill.live { background: #e6f7ec; color: #1c7a3d;}
+.pill.mock { background: #fdf3e3; color: #a86a12;}
+.timeline h3 { margin: 16px 0 8px; font-size: 16px;}
+.timeline li { margin: 6px 0; font-size: 14.5px; line-height: 1.65;}
+.timeline p.gtext { font-size: 14.5px; line-height: 1.8; white-space: pre-wrap;}
+/* 等待 */
+.spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #dfe6f0;
+border-top-color: #1a73e8; border-radius: 50%; animation: spin.9s linear infinite;
+vertical-align: -4px; margin-right: 10px;}
+@keyframes spin { to { transform: rotate(360deg);}}
+.elapsed { color: #1a73e8; font-weight: bold;}
+.stage { font-size: 15px; font-weight: 500;}
+@media (max-width: 480px) {
+.hero h1 { font-size: 21px;}
+.search-row { flex-direction: column;}
+button.go { width: 100%;}
+.gauge-wrap { justify-content: center; text-align: center;}
+}
 </style>
 </head>
 <body>
-<h1>🌪️ 台风-内涝社区韧性指引 <span class="hint">AI4Climate Track05 原型</span></h1>
+<div class="hero">
+<h1>🌀 社区防台小助手</h1>
+<p>台风路径 · 降雨预报 · 内涝风险 — 融合成一份居民行动清单 &nbsp;|&nbsp; AI4Climate Track05</p>
+</div>
+<div class="wrap">
 <div class="card">
-  <p class="hint">输入任意地址（如：上海陆家嘴、深圳南山），或示例小区（繁裕小区 / 迎凤小区 / 景元小区 / 书院社区），系统融合台风路径、降雨预报与内涝风险底图，给出复合风险评估 + 居民行动指引。</p>
-  <input id="addr" placeholder="例如：繁裕小区" value="繁裕小区">
-  <button id="go" onclick="assess()">生成评估</button>
+<div class="search-row">
+<input id="addr" placeholder="输入任意地址，如：深圳南山区" value="繁裕小区" onkeydown="if(event.key==='Enter')assess()">
+<button class="go" id="go" onclick="assess()">生成评估</button>
+</div>
+<div class="chips">
+<button class="chip" onclick="fill('繁裕小区')">📍 繁裕小区</button>
+<button class="chip" onclick="fill('深圳南山区')">📍 深圳南山</button>
+<button class="chip" onclick="fill('上海陆家嘴')">📍 上海陆家嘴</button>
+<button class="chip" onclick="fill('广州市天河区')">📍 广州天河</button>
+</div>
 </div>
 <div id="result"></div>
+</div>
 <script>
-async function assess() {
-  const btn = document.getElementById('go'), box = document.getElementById('result');
-  btn.disabled = true;
-  const t0 = Date.now();
-  const stages = ['📍 定位地址…', '🌀 获取台风实况与预报路径…', '🌧️ 获取降雨预报…', '🤖 AI 生成行动指引…'];
-  let si = 0;
-  box.innerHTML = '<div class="card"><span class="spinner"></span><span id="stage">' + stages[0] + '</span> <span class="hint">已等待 <span class="elapsed" id="elapsed">0</span> 秒</span></div>';
-  const timer = setInterval(() => {
-    const s = Math.floor((Date.now() - t0) / 1000);
-    const e = document.getElementById('elapsed'); if (e) e.textContent = s;
-    const st = document.getElementById('stage');
-    if (st) st.textContent = stages[Math.min(Math.floor(s / 8), stages.length - 1)];
-  }, 500);
-  try {
-    const r = await fetch('/api/assess', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({address: document.getElementById('addr').value})
-    });
-    const d = await r.json();
-    if (!r.ok) {
-      if (r.status === 429) { box.innerHTML = '<div class="card">⏳ ' + d.error + '</div>'; }
-      else { box.innerHTML = '<div class="card">❌ ' + d.error + '</div>'; }
-      return;
-    }
-    const risk = d.risk, g = d.guidance;
-    let html = '<div class="card"><h2>' + d.community.name + '</h2>'
-      + '<p>综合风险：<b>' + risk.score + ' 分</b> <span class="badge level-' + risk.level + '">' + risk.level + '风险</span></p>'
-      + '<p class="hint">台风「' + risk.typhoon_name + '」· 数据来源：台风(' + d.data_sources.typhoon + ') / 降雨(' + d.data_sources.rainfall + ')</p>';
-    risk.factors.forEach(f => { html += '<div class="factor">· ' + f.name + '：<b>' + f.score + '/' + f.max + '</b> —— ' + f.reason + '</div>'; });
-    html += '</div><div class="card timeline"><h2>居民行动指引</h2><p class="hint">' + g.header + '</p>';
-    if (g.mode === 'llm') { html += '<p>' + g.text.replace(/\n/g, '<br>') + '</p>'; }
-    else {
-      const names = {'72h': '未来72小时', '24h': '未来24小时', '6h': '未来6小时'};
-      for (const k of ['72h','24h','6h']) {
-        html += '<h3>【' + names[k] + '】</h3><ol>' + g.timelines[k].map(t => '<li>' + t + '</li>').join('') + '</ol>';
-      }
-    }
-    const used = ((Date.now() - t0) / 1000).toFixed(1);
-    box.innerHTML = html + '<p class="hint">本次评估用时 ' + used + ' 秒</p></div>';
-  } catch (e) { box.innerHTML = '<div class="card">❌ 请求失败：' + e + '</div>'; }
-  clearInterval(timer); btn.disabled = false;
+function fill(v) { document.getElementById('addr').value = v; assess();}
+
+const LEVEL_COLOR = {'极高':'#c0392b','高':'#e67e22','中':'#d4a017','低':'#27ae60'};
+
+function gaugeSVG(score, level) {
+const c = LEVEL_COLOR[level] || '#27ae60';
+const r = 62, circ = 2 * Math.PI * r;
+const frac = Math.min(score, 100) / 100;
+return '<div class="gauge"><svg width="150" height="150">'
++ '<circle cx="75" cy="75" r="' + r + '" fill="none" stroke="#edf1f6" stroke-width="14"/>'
++ '<circle id="gaugeArc" cx="75" cy="75" r="' + r + '" fill="none" stroke="' + c + '" stroke-width="14"'
++ ' stroke-linecap="round" stroke-dasharray="' + circ.toFixed(1) + '" stroke-dashoffset="' + circ.toFixed(1) + '"/>'
++ '</svg><div class="num"><b class="c-' + level + '">' + score + '</b><span>综合风险 / 100</span></div></div>'
 }
+
+async function assess() {
+const btn = document.getElementById('go'), box = document.getElementById('result');
+const addr = document.getElementById('addr').value.trim();
+if (!addr) { box.innerHTML = '<div class="card">⚠️ 请先输入地址</div>'; return;}
+btn.disabled = true;
+const t0 = Date.now();
+const stages = ['📍 定位地址…', '🌀 获取台风实况与预报路径…', '🌧️ 获取降雨预报…', '🤖 AI 生成行动指引…'];
+box.innerHTML = '<div class="card"><span class="spinner"></span><span class="stage" id="stage">' + stages[0] + '</span>'
++ ' <span class="hint">已等待 <span class="elapsed" id="elapsed">0</span> 秒</span></div>';
+const timer = setInterval(() => {
+const s = Math.floor((Date.now() - t0) / 1000);
+const e = document.getElementById('elapsed'); if (e) e.textContent = s;
+const st = document.getElementById('stage');
+if (st) st.textContent = stages[Math.min(Math.floor(s / 8), stages.length - 1)];
+}, 500);
+try {
+const r = await fetch('/api/assess', {
+method: 'POST', headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({address: addr})
+});
+const d = await r.json();
+clearInterval(timer);
+if (!r.ok) {
+box.innerHTML = '<div class="card">' + (r.status === 429? '⏳ ': '❌ ') + esc(d.error) + '</div>';
+btn.disabled = false; return;
+}
+const risk = d.risk, g = d.guidance;
+const srcPill = (k, v) => '<span class="pill ' + (v === 'live'? 'live': (v === 'mock'? 'mock': '')) + '">'
++ k + '：' + v + '</span>';
+let html = '<div class="card"><h2 style="margin:0 0 12px">' + esc(d.community.name) + '</h2>'
++ '<div class="gauge-wrap">' + gaugeSVG(risk.score, risk.level)
++ '<div><span class="badge level-' + risk.level + '">' + risk.level + '风险</span>'
++ '<p class="hint" style="margin:10px 0 0">当前台风：' + esc(risk.typhoon_name) + '</p></div></div>';
+risk.factors.forEach(f => {
+const pct = Math.round(f.score / f.max * 100);
+html += '<div class="factor"><div class="row"><span>' + esc(f.name) + '</span>'
++ '<b>' + f.score + ' / ' + f.max + '</b></div>'
++ '<div class="bar"><i data-w="' + pct + '"></i></div>'
++ '<div class="why">' + esc(f.reason) + '</div></div>';
+});
+html += '<div class="src">' + srcPill('台风', d.data_sources.typhoon)
++ srcPill('降雨', d.data_sources.rainfall) + srcPill('地形', d.data_sources.terrain) + '</div></div>';
+html += '<div class="card timeline"><h2 style="margin-top:0">📋 居民行动指引</h2><p class="hint">' + esc(g.header) + '</p>';
+if (g.mode === 'llm') { html += '<p class="gtext">' + esc(g.text) + '</p>';}
+else {
+const names = {'72h': '未来72小时', '24h': '未来24小时', '6h': '未来6小时'};
+for (const k of ['72h','24h','6h']) {
+html += '<h3></h3><ol>' + g.timelines[k].map(t => '<li>' + esc(t) + '</li>').join('') + '</ol>';
+}
+}
+const used = ((Date.now() - t0) / 1000).toFixed(1);
+box.innerHTML = html + '<p class="hint">本次评估用时 ' + used + ' 秒</p></div>';
+requestAnimationFrame(() => requestAnimationFrame(() => {
+document.querySelectorAll('.bar i').forEach(el => { el.style.width = el.dataset.w + '%';});
+const arc = document.getElementById('gaugeArc');
+if (arc) {
+const circ = 2 * Math.PI * 62;
+arc.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.22,.8,.3,1)';
+arc.style.strokeDashoffset = (circ * (1 - Math.min(risk.score, 100) / 100)).toFixed(1);
+}
+}));
+} catch (e) {
+clearInterval(timer);
+box.innerHTML = '<div class="card">❌ 请求失败：' + esc(String(e)) + '</div>';
+}
+btn.disabled = false;
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 </script>
 </body>
 </html>
