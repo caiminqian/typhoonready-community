@@ -4,58 +4,126 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>社区防台小助手 · TyphoonReady Community（静态演示）</title>
+<link rel="stylesheet" href="leaflet.css">
+<script src="leaflet.js"></script>
 <style>
-body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 760px; margin: 0 auto; padding: 24px; background: #f5f7fa; color: #222;}
-h1 { font-size: 22px;}
-.card { background: #fff; border-radius: 10px; padding: 18px; margin: 14px 0; box-shadow: 0 1px 4px rgba(0,0,0,.08);}
-.badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-weight: bold; color: #fff;}
-.lv-高 { background: #e67e22;}.lv-中 { background: #d4a017;}.lv-低 { background: #27ae60;}.lv-极高 { background: #c0392b;}
-select, button { font-size: 16px; padding: 10px; border-radius: 8px; border: 1px solid #ccc;}
-select { width: 60%;} button { background: #1a73e8; color: #fff; border: none; cursor: pointer;}
-.factor { margin: 6px 0;}.timeline h3 { margin: 12px 0 6px;} li { margin: 4px 0;}
-.hint { color: #666; font-size: 13px;}
-.note { background: #fff8e1; border-left: 4px solid #f0ad4e; padding: 10px 14px; border-radius: 6px; margin: 14px 0; font-size: 14px;}
+* { box-sizing: border-box; }
+body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; background: #f5f7fa; color: #222; }
+.hero { background: linear-gradient(135deg, #0f1b2d 0%, #1a3a5c 60%, #2a86d4 100%); color: #fff; padding: 36px 20px 28px; text-align: center; }
+.hero h1 { margin: 0 0 8px; font-size: 26px; }
+.hero p { margin: 6px 0; color: #bcd3ea; font-size: 14px; }
+.hero a { color: #8fc3f5; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 0 14px 40px; }
+.card { background: #fff; border-radius: 12px; padding: 20px; margin: 16px 0; box-shadow: 0 2px 10px rgba(0,0,0,.07); }
+select, button { font-size: 16px; padding: 11px 12px; border-radius: 8px; border: 1px solid #ccc; }
+select { width: 62%; margin-right: 8px; }
+button.go { background: #1a73e8; color: #fff; border: none; cursor: pointer; font-weight: 700; }
+.badge { display: inline-block; padding: 4px 16px; border-radius: 20px; font-weight: bold; color: #fff; font-size: 15px; }
+.lv-高 { background: #e67e22; } .lv-中 { background: #d4a017; } .lv-低 { background: #27ae60; } .lv-极高 { background: #c0392b; }
+.score-big { font-size: 44px; font-weight: 800; }
+.factor { margin: 10px 0; }
+.fbar { height: 10px; background: #eef1f5; border-radius: 5px; overflow: hidden; margin: 5px 0; }
+.fbar > div { height: 100%; border-radius: 5px; }
+.freason { font-size: 13px; color: #7a8799; }
+.map { height: 340px; border-radius: 10px; margin-top: 14px; z-index: 0; }
+.map-legend { font-size: 12px; color: #7a8799; margin-top: 6px; }
+.map-legend i { display: inline-block; width: 22px; height: 4px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+.src { margin-top: 10px; }
+.pill { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 12px; margin-right: 6px; }
+.pill.live { background: #e6f4ea; color: #1e7e34; } .pill.mock { background: #fef3e2; color: #b26a00; } .pill.replay { background: #e8f0fe; color: #1a73e8; }
+.gtext { white-space: pre-wrap; line-height: 1.8; font-size: 15px; }
+.tl { border: 1px solid #e6ecf3; border-radius: 10px; margin: 12px 0; overflow: hidden; }
+.tl-head { padding: 9px 14px; font-weight: 700; color: #fff; font-size: 15px; }
+.tl-72 { background: #2a86d4; } .tl-24 { background: #e67e22; } .tl-6 { background: #c0392b; }
+.tl-list { margin: 0; padding: 10px 14px 10px 38px; background: #fbfcfe; }
+.tl-list li { margin: 8px 0; font-size: 14.5px; line-height: 1.65; }
+.tl-summary { background: #eef4fb; border-left: 4px solid #2a86d4; padding: 10px 14px; font-size: 14px; border-radius: 0 8px 8px 0; margin: 4px 0 6px; line-height: 1.7; }
+.hint { color: #7a8799; font-size: 13px; }
+.note { background: #fff8e1; border-left: 4px solid #f0ad4e; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 14px; line-height: 1.7; }
+h2 { margin: 0 0 10px; font-size: 20px; }
+@media (max-width: 480px) { .map { height: 260px; } select { width: 100%; margin-bottom: 8px; } }
 </style>
 </head>
 <body>
-<h1>🌪️ 社区防台小助手 <span class="hint">TyphoonReady Community · AI4Climate Track05</span></h1>
-<div class="note">🤖 AI 演示版：以下为 <b>台风贝碧嘉（2024）真实路径复盘</b> 的评估结果（IBTrACS 最佳路径 + ERA5 降雨再分析），行动指引由大模型生成。完整可运行版本（含实时数据）见 <a href="https://github.com/caiminqian/typhoonready-community">GitHub 仓库</a>。</div>
-<div class="card">
-<p class="hint">选择示例小区，查看复盘评估结果：</p>
-<select id="sel"></select>
-<button onclick="render()">生成评估</button>
+<div class="hero">
+  <h1>🌪️ 社区防台小助手</h1>
+  <p>TyphoonReady Community · AI4Climate Track05 静态演示</p>
+  <p>以下为 <b>台风贝碧嘉（2024）真实路径复盘</b>（IBTrACS 最佳路径 + ERA5 降雨再分析）<br>
+  实时可交互版本见 <a href="https://typhoonready.onrender.com">typhoonready.onrender.com</a> ·
+  代码 <a href="https://github.com/caiminqian/typhoonready-community">GitHub</a></p>
 </div>
-<div id="result"></div>
+<div class="wrap">
+  <div class="card">
+    <p class="hint" style="margin-top:0">选择示例小区，查看复盘评估结果：</p>
+    <select id="sel"></select><button class="go" onclick="render()">生成评估</button>
+  </div>
+  <div id="result"></div>
+</div>
 <script>
 let DATA = {};
 fetch('results.json').then(r => r.json()).then(d => {
-DATA = d;
-const sel = document.getElementById('sel');
-Object.keys(d).forEach(k => {
-const o = document.createElement('option');
-o.value = k; o.textContent = d[k].name; sel.appendChild(o);
-});
-render();
-});
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
-function render(){
-const k = document.getElementById('sel').value;
-const d = DATA[k]; if(!d) return;
-const risk = d.risk, g = d.guidance;
-let html = '<div class="card"><h2>' + esc(d.name) + '</h2>'
-+ '<p>综合风险：<b>' + risk.score + ' 分</b> <span class="badge lv-' + risk.level + '">' + risk.level + '风险</span></p>'
-+ '<p class="hint">复盘案例：台风贝碧嘉（2024）· 数据来源：台风(' + d.data_sources.typhoon + ') / 降雨(' + d.data_sources.rainfall + ')</p>';
-risk.factors.forEach(f => { html += '<div class="factor">· ' + esc(f.name) + '：<b>' + f.score + '/' + f.max + '</b> —— ' + esc(f.reason) + '</div>';});
-html += '</div><div class="card timeline"><h2>居民行动指引</h2><p class="hint">' + esc(g.header) + '</p>';
-if (g.mode === 'llm' && g.text) {
-  html += '<div style="white-space:pre-wrap;line-height:1.7">' + esc(g.text) + '</div>';
-} else {
-  const names = {'72h': '未来72小时', '24h': '未来24小时', '6h': '未来6小时'};
-  ['72h','24h','6h'].forEach(k2 => {
-    html += '<h3>【' + names[k2] + '】</h3><ol>' + g.timelines[k2].map(t => '<li>' + esc(t) + '</li>').join('') + '</ol>';
+  DATA = d;
+  const sel = document.getElementById('sel');
+  Object.keys(d).forEach(k => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = d[k].name; sel.appendChild(o);
   });
+  render();
+});
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function srcPill(k, v) {
+  const cls = v === 'live' ? 'live' : (v === 'replay' ? 'replay' : 'mock');
+  const label = v === 'live' ? '实时' : (v === 'replay' ? '复盘' : '模拟');
+  return '<span class="pill ' + cls + '">' + k + ' · ' + label + '</span>';
 }
-document.getElementById('result').innerHTML = html + '</div>';
+function drawMap(track) {
+  const pts = track.points, com = track.community;
+  const map = L.map('map', {scrollWheelZoom: false}).setView([com.lat, com.lon], 5);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {maxZoom: 18, attribution: '&copy; OpenStreetMap'}).addTo(map);
+  const coords = pts.map(p => [p.lat, p.lon]);
+  if (coords.length > 1) { L.polyline(coords, {color: '#e74c3c', weight: 3}).addTo(map); }
+  L.circleMarker([com.lat, com.lon], {radius: 8, color: '#fff', weight: 3, fillColor: '#1a73e8', fillOpacity: 1})
+    .addTo(map).bindPopup('📍 ' + esc(track.name || '评估小区')).openPopup();
+  map.fitBounds([...coords, [com.lat, com.lon]], {padding: [30, 30]});
+  map.on('click', () => map.scrollWheelZoom.enable());
+  const lg = document.getElementById('mapLegend');
+  if (lg) { lg.innerHTML = '<i style="background:#e74c3c"></i>贝碧嘉真实路径 🔵 评估小区'; }
+}
+const FCOLOR = ['#2a86d4', '#e67e22', '#27ae60'];
+function render() {
+  const k = document.getElementById('sel').value;
+  const d = DATA[k]; if (!d) return;
+  const risk = d.risk, g = d.guidance;
+  let html = '<div class="card"><h2>' + esc(d.name) + '</h2>'
+    + '<p><span class="score-big">' + risk.score + '</span> <span class="hint">分</span> '
+    + '<span class="badge lv-' + risk.level + '">' + risk.level + '风险</span></p>'
+    + '<p class="hint">复盘案例：台风贝碧嘉（2024）</p>';
+  risk.factors.forEach((f, i) => {
+    const pct = Math.round(f.score / f.max * 100);
+    html += '<div class="factor"><b>' + esc(f.name) + '</b> ' + f.score + '/' + f.max
+      + '<div class="fbar"><div style="width:' + pct + '%;background:' + FCOLOR[i % 3] + '"></div></div>'
+      + '<div class="freason">' + esc(f.reason) + '</div></div>';
+  });
+  html += '<div class="src">' + srcPill('台风', d.data_sources.typhoon)
+    + srcPill('降雨', d.data_sources.rainfall) + srcPill('地形', d.data_sources.terrain) + '</div>';
+  if (d.track && d.track.points && d.track.points.length) {
+    html += '<div id="map" class="map"></div><div class="map-legend" id="mapLegend"></div>';
+  }
+  html += '</div><div class="card"><h2>📋 居民行动指引</h2><p class="hint">' + esc(g.header) + '</p>';
+  if (g.mode === 'llm' && g.text) {
+    html += '<div class="gtext">' + esc(g.text) + '</div>';
+  } else if (g.timelines) {
+    const names = {'72h': ['未来72小时 · 提前准备', 'tl-72'], '24h': ['未来24小时 · 加固防范', 'tl-24'], '6h': ['未来6小时 · 紧急避险', 'tl-6']};
+    if (g.summary) { html += '<div class="tl-summary">📌 ' + esc(g.summary) + '</div>'; }
+    for (const kk of ['72h', '24h', '6h']) {
+      html += '<div class="tl"><div class="tl-head ' + names[kk][1] + '">' + names[kk][0] + '</div>'
+        + '<ol class="tl-list">' + g.timelines[kk].map(t => '<li>' + esc(t) + '</li>').join('') + '</ol></div>';
+    }
+  }
+  html += '</div>';
+  document.getElementById('result').innerHTML = html;
+  if (d.track && d.track.points && d.track.points.length && window.L) { drawMap(d.track); }
 }
 </script>
 </body>
