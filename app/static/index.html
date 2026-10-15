@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台风-内涝社区韧性指引 · AI4Climate Track05 原型</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 760px; margin: 0 auto; padding: 24px; background: #f5f7fa; color: #222; }
+  h1 { font-size: 22px; }
+  .card { background: #fff; border-radius: 10px; padding: 18px; margin: 14px 0; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .level-极高 { color: #fff; background: #c0392b; } .level-高 { color: #fff; background: #e67e22; }
+  .level-中 { color: #fff; background: #d4a017; } .level-低 { color: #fff; background: #27ae60; }
+  .badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-weight: bold; }
+  input, button { font-size: 16px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+  input { width: 60%; } button { background: #1a73e8; color: #fff; border: none; cursor: pointer; }
+  button:disabled { background: #999; }
+  .factor { margin: 6px 0; } .timeline h3 { margin: 12px 0 6px; } li { margin: 4px 0; }
+  .hint { color: #666; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>🌪️ 台风-内涝社区韧性指引 <span class="hint">AI4Climate Track05 原型</span></h1>
+<div class="card">
+  <p class="hint">输入小区名（示例：繁裕小区 / 迎凤小区 / 景元小区），系统融合台风路径、降雨预报与内涝风险底图，给出复合风险评估 + 居民行动指引。</p>
+  <input id="addr" placeholder="例如：繁裕小区" value="繁裕小区">
+  <button id="go" onclick="assess()">生成评估</button>
+</div>
+<div id="result"></div>
+<script>
+async function assess() {
+  const btn = document.getElementById('go'), box = document.getElementById('result');
+  btn.disabled = true; box.innerHTML = '<div class="card">评估中…</div>';
+  try {
+    const r = await fetch('/api/assess', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({address: document.getElementById('addr').value})
+    });
+    const d = await r.json();
+    if (!r.ok) { box.innerHTML = '<div class="card">❌ ' + d.error + '</div>'; return; }
+    const risk = d.risk, g = d.guidance;
+    let html = '<div class="card"><h2>' + d.community.name + '</h2>'
+      + '<p>综合风险：<b>' + risk.score + ' 分</b> <span class="badge level-' + risk.level + '">' + risk.level + '风险</span></p>'
+      + '<p class="hint">台风「' + risk.typhoon_name + '」· 数据来源：台风(' + d.data_sources.typhoon + ') / 降雨(' + d.data_sources.rainfall + ')</p>';
+    risk.factors.forEach(f => { html += '<div class="factor">· ' + f.name + '：<b>' + f.score + '/' + f.max + '</b> —— ' + f.reason + '</div>'; });
+    html += '</div><div class="card timeline"><h2>居民行动指引</h2><p class="hint">' + g.header + '</p>';
+    if (g.mode === 'llm') { html += '<p>' + g.text.replace(/\n/g, '<br>') + '</p>'; }
+    else {
+      const names = {'72h': '未来72小时', '24h': '未来24小时', '6h': '未来6小时'};
+      for (const k of ['72h','24h','6h']) {
+        html += '<h3>【' + names[k] + '】</h3><ol>' + g.timelines[k].map(t => '<li>' + t + '</li>').join('') + '</ol>';
+      }
+    }
+    box.innerHTML = html + '</div>';
+  } catch (e) { box.innerHTML = '<div class="card">❌ 请求失败：' + e + '</div>'; }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
