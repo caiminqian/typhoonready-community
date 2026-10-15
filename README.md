@@ -4,8 +4,8 @@
 
 ## 在线体验
 
-- **Live 服务**：https://typhoonready.onrender.com（实时台风+实时降雨，免费版冷启动约 30 秒）
-- **静态演示**：https://caiminqian.github.io/typhoonready-community/（贝碧嘉 2024 复盘预计算结果）
+- **Live 服务**：[typhoonready.onrender.com](https://typhoonready.onrender.com)（实时台风+实时降雨，免费版冷启动约 30 秒）
+- **静态演示**：[caiminqian.github.io/typhoonready-community](https://caiminqian.github.io/typhoonready-community/)（贝碧嘉 2024 复盘预计算结果）
 
 ## 本地运行（3 步）
 
