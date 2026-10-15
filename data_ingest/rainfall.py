@@ -88,6 +88,16 @@ class RainfallFetcher(BaseFetcher):
         return data
 
     def _fetch_forecast(self, lat: float, lon: float) -> dict:
+        try:
+            return self._fetch_open_meteo(lat, lon)
+        except Exception as e:
+            # Open-Meteo 被限流（共享 IP 常见）时切 7timer 备用源，保证各地有真数
+            try:
+                return self._fetch_7timer(lat, lon)
+            except Exception:
+                raise e
+
+    def _fetch_open_meteo(self, lat: float, lon: float) -> dict:
         q = urllib.parse.urlencode({
             "latitude": lat, "longitude": lon,
             "daily": "precipitation_sum",
@@ -100,6 +110,28 @@ class RainfallFetcher(BaseFetcher):
         if not daily:
             raise RuntimeError("Open-Meteo forecast 返回为空")
         return self._wrap(lat, lon, daily, "live：Open-Meteo 逐日降水预报（未来3天）")
+
+    def _fetch_7timer(self, lat: float, lon: float) -> dict:
+        # 7timer 免费无 key；prec_amount 为每 3 小时降水量（毫米），聚合成逐日
+        from datetime import datetime
+        url = (f"http://www.7timer.info/bin/api.pl?lon={lon:.2f}&lat={lat:.2f}"
+               f"&product=civil&output=json")
+        req = urllib.request.Request(url, headers=UA)
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            # 7timer 会 302 跳转，urllib 默认跟随
+            raw = json.loads(resp.read().decode("utf-8"))
+        series = raw.get("dataseries", [])
+        if not series:
+            raise RuntimeError("7timer 返回为空")
+        init = datetime.strptime(raw.get("init", ""), "%Y%m%d%H")
+        per_day: dict[str, float] = {}
+        for p in series[:24]:  # 未来 72 小时
+            dt = init + timedelta(hours=p.get("timepoint", 0))
+            day = dt.strftime("%Y-%m-%d")
+            per_day[day] = per_day.get(day, 0.0) + float(p.get("prec_amount", 0) or 0)
+        daily = [{"date": d, "mm_24h": round(v, 1)}
+                 for d, v in sorted(per_day.items())[:3]]  # 与 Open-Meteo 对齐：未来 3 天
+        return self._wrap(lat, lon, daily, "live：7timer 逐 3 小时降水聚合（Open-Meteo 限流时备用）")
 
     def _fetch_archive(self, lat: float, lon: float, start: str, end: str) -> dict:
         q = urllib.parse.urlencode({

@@ -39,11 +39,16 @@ def run_pipeline(address: str, typhoon_mode: str = "live",
         }
         terrain_source = "estimated"
 
-    # 1) 数据接入（真实接口优先，失败自动回退 mock）
-    typhoon = TyphoonFetcher().fetch(mode=typhoon_mode, case=replay_case)
-    rainfall = RainfallFetcher().fetch(
-        lat=community["lat"], lon=community["lon"],
-        start_date=rain_start, end_date=rain_end)
+    # 1) 数据接入（真实接口优先，失败自动回退 mock；台风与降雨并行拉取）
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        fut_typhoon = pool.submit(TyphoonFetcher().fetch, mode=typhoon_mode,
+                                  case=replay_case)
+        fut_rain = pool.submit(
+            RainfallFetcher().fetch, lat=community["lat"], lon=community["lon"],
+            start_date=rain_start, end_date=rain_end)
+        typhoon = fut_typhoon.result()
+        rainfall = fut_rain.result()
     zone = terrain.get_flood_zone(community["id"])
     if terrain_source == "estimated":
         zone = {"zone_level": 1, "elevation_m": 5.0,
