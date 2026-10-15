@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="520" font-family="sans-serif">
+<rect width="860" height="520" fill="#ffffff"/>
+<text x="430" y="24" text-anchor="middle" font-size="17" font-weight="bold">降雨权重 w_r 敏感性：总分随 w_r（10~50）变化</text>
+<rect x="70" y="64.0" width="760" height="66.0" fill="#fadbd8" opacity="0.55"/>
+<text x="852" y="102.0" text-anchor="end" font-size="11" fill="#666">极高</text>
+<rect x="70" y="130.0" width="760" height="87.99999999999997" fill="#fdebd0" opacity="0.55"/>
+<text x="852" y="179.0" text-anchor="end" font-size="11" fill="#666">高</text>
+<rect x="70" y="217.99999999999997" width="760" height="110.00000000000003" fill="#fef9e7" opacity="0.55"/>
+<text x="852" y="278.0" text-anchor="end" font-size="11" fill="#666">中</text>
+<rect x="70" y="328.0" width="760" height="132.0" fill="#eafaf1" opacity="0.55"/>
+<text x="852" y="399.0" text-anchor="end" font-size="11" fill="#666">低</text>
+<line x1="70" y1="328.0" x2="830" y2="328.0" stroke="#999" stroke-dasharray="6 4" stroke-width="1"/>
+<text x="62" y="332.0" text-anchor="end" font-size="11" fill="#666">30</text>
+<line x1="70" y1="217.99999999999997" x2="830" y2="217.99999999999997" stroke="#999" stroke-dasharray="6 4" stroke-width="1"/>
+<text x="62" y="221.99999999999997" text-anchor="end" font-size="11" fill="#666">55</text>
+<line x1="70" y1="130.0" x2="830" y2="130.0" stroke="#999" stroke-dasharray="6 4" stroke-width="1"/>
+<text x="62" y="134.0" text-anchor="end" font-size="11" fill="#666">75</text>
+<line x1="450.0" y1="64" x2="450.0" y2="460" stroke="#1a73e8" stroke-width="1.5"/>
+<text x="450.0" y="480" text-anchor="middle" font-size="11" fill="#1a73e8">w_r=30（基准）</text>
+<line x1="70" y1="460" x2="830" y2="460" stroke="#333"/>
+<line x1="70" y1="64" x2="70" y2="460" stroke="#333"/>
+<text x="70.0" y="480" text-anchor="middle" font-size="10" fill="#666">10</text>
+<line x1="70.0" y1="460" x2="70.0" y2="465" stroke="#333"/>
+<text x="165.0" y="480" text-anchor="middle" font-size="10" fill="#666">15</text>
+<line x1="165.0" y1="460" x2="165.0" y2="465" stroke="#333"/>
+<text x="260.0" y="480" text-anchor="middle" font-size="10" fill="#666">20</text>
+<line x1="260.0" y1="460" x2="260.0" y2="465" stroke="#333"/>
+<text x="355.0" y="480" text-anchor="middle" font-size="10" fill="#666">25</text>
+<line x1="355.0" y1="460" x2="355.0" y2="465" stroke="#333"/>
+<text x="450.0" y="480" text-anchor="middle" font-size="10" fill="#666">30</text>
+<line x1="450.0" y1="460" x2="450.0" y2="465" stroke="#333"/>
+<text x="545.0" y="480" text-anchor="middle" font-size="10" fill="#666">35</text>
+<line x1="545.0" y1="460" x2="545.0" y2="465" stroke="#333"/>
+<text x="640.0" y="480" text-anchor="middle" font-size="10" fill="#666">40</text>
+<line x1="640.0" y1="460" x2="640.0" y2="465" stroke="#333"/>
+<text x="735.0" y="480" text-anchor="middle" font-size="10" fill="#666">45</text>
+<line x1="735.0" y1="460" x2="735.0" y2="465" stroke="#333"/>
+<text x="830.0" y="480" text-anchor="middle" font-size="10" fill="#666">50</text>
+<line x1="830.0" y1="460" x2="830.0" y2="465" stroke="#333"/>
+<text x="450.0" y="512" text-anchor="middle" font-size="12">降雨权重 w_r（台风/地形按 40:30 比例分剩余，总和=100）</text>
+<text x="16" y="262.0" text-anchor="middle" font-size="12" transform="rotate(-90 16 262.0)">综合风险总分</text>
+<line x1="80" y1="50" x2="102" y2="50" stroke="#1a73e8" stroke-width="2.5"/>
+<text x="106" y="54" font-size="11" fill="#333">繁裕实况</text>
+<line x1="208" y1="50" x2="230" y2="50" stroke="#e67e22" stroke-width="2.5"/>
+<text x="234" y="54" font-size="11" fill="#333">景元实况</text>
+<line x1="336" y1="50" x2="358" y2="50" stroke="#27ae60" stroke-width="2.5"/>
+<text x="362" y="54" font-size="11" fill="#333">贝碧嘉复盘</text>
+<line x1="464" y1="50" x2="486" y2="50" stroke="#c0392b" stroke-width="2.5"/>
+<text x="490" y="54" font-size="11" fill="#333">暴雨型</text>
+<line x1="592" y1="50" x2="614" y2="50" stroke="#8e44ad" stroke-width="2.5"/>
+<text x="618" y="54" font-size="11" fill="#333">台风逼近型</text>
+<line x1="720" y1="50" x2="742" y2="50" stroke="#16a085" stroke-width="2.5"/>
+<text x="746" y="54" font-size="11" fill="#333">临界型</text>
+<path d="M 70.0 346.9 L 117.5 350.0 L 165.0 353.1 L 212.5 356.3 L 260.0 359.4 L 307.5 362.6 L 355.0 365.7 L 402.5 368.9 L 450.0 372.0 L 497.5 375.1 L 545.0 378.3 L 592.5 381.4 L 640.0 384.6 L 687.5 387.7 L 735.0 390.9 L 782.5 394.0 L 830.0 397.1" fill="none" stroke="#1a73e8" stroke-width="2.5"/>
+<path d="M 70.0 290.3 L 117.5 295.0 L 165.0 299.7 L 212.5 304.4 L 260.0 309.1 L 307.5 313.9 L 355.0 318.6 L 402.5 323.3 L 450.0 328.0 L 497.5 332.7 L 545.0 337.4 L 592.5 342.1 L 640.0 346.9 L 687.5 351.6 L 735.0 356.3 L 782.5 361.0 L 830.0 365.7" fill="none" stroke="#e67e22" stroke-width="2.5"/>
+<path d="M 70.0 111.8 L 117.5 119.0 L 165.0 126.2 L 212.5 133.5 L 260.0 140.7 L 307.5 147.9 L 355.0 155.1 L 402.5 162.4 L 450.0 169.6 L 497.5 176.8 L 545.0 184.1 L 592.5 191.3 L 640.0 198.5 L 687.5 205.7 L 735.0 213.0 L 782.5 220.2 L 830.0 227.4" fill="none" stroke="#27ae60" stroke-width="2.5"/>
+<path d="M 70.0 266.4 L 117.5 262.0 L 165.0 257.6 L 212.5 253.2 L 260.0 248.8 L 307.5 244.4 L 355.0 240.0 L 402.5 235.6 L 450.0 231.2 L 497.5 226.8 L 545.0 222.4 L 592.5 218.0 L 640.0 213.6 L 687.5 209.2 L 735.0 204.8 L 782.5 200.4 L 830.0 196.0" fill="none" stroke="#c0392b" stroke-width="2.5"/>
+<path d="M 70.0 182.2 L 117.5 185.0 L 165.0 187.8 L 212.5 190.7 L 260.0 193.5 L 307.5 196.3 L 355.0 199.1 L 402.5 202.0 L 450.0 204.8 L 497.5 207.6 L 545.0 210.5 L 592.5 213.3 L 640.0 216.1 L 687.5 218.9 L 735.0 221.8 L 782.5 224.6 L 830.0 227.4" fill="none" stroke="#8e44ad" stroke-width="2.5"/>
+<path d="M 70.0 250.1 L 117.5 251.0 L 165.0 251.9 L 212.5 252.9 L 260.0 253.8 L 307.5 254.8 L 355.0 255.7 L 402.5 256.7 L 450.0 257.6 L 497.5 258.5 L 545.0 259.5 L 592.5 260.4 L 640.0 261.4 L 687.5 262.3 L 735.0 263.3 L 782.5 264.2 L 830.0 265.1" fill="none" stroke="#16a085" stroke-width="2.5"/>
+</svg>
