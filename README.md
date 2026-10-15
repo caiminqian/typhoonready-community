@@ -41,6 +41,8 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 - `data_ingest/`：台风路径 / 降雨预报 / 内涝底图接入。真实接口（中央气象台、Open-Meteo）以 TODO 占位，当前全部走 `data/mock/` 内置数据，保证评审离线可跑。
 - `risk_engine/`：复合风险评分，台风接近度 40 分 + 降雨强度 30 分 + 地形内涝 30 分，规则显式可解释。
 - `guidance/`：指引生成。配置 `AI4C_LLM_API_KEY`（OpenAI 兼容接口）则调 LLM；无 key 时用规则模板降级，离线也有完整输出。
+  环境变量：`AI4C_LLM_API_KEY` / `AI4C_LLM_BASE_URL`（默认 https://api.openai.com/v1）/ `AI4C_LLM_MODEL`（默认 gpt-4o-mini）。
+  已验证：商汤 SenseNova（`AI4C_LLM_BASE_URL=https://token.sensenova.cn/v1`，`AI4C_LLM_MODEL=sensenova-6.8-flash-lite`）、Qwen2.5-7B（SiliconFlow）、DeepSeek API。
 - `app/`：FastAPI Web demo；`run_demo.py`：CLI 一键演示。
 
 ## AI 必不可少的论证
