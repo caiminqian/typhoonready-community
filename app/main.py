@@ -21,7 +21,8 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 class AssessRequest(BaseModel):
-    address: str
+    address: str = ""
+    mode: str = "live"  # live | replay（贝碧嘉 2024 复盘）
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -49,7 +50,12 @@ def assess(req: AssessRequest, request: Request):
         # 熔断：pipeline 最多跑 100 秒，超时返回 504 而不是无限挂起
         import concurrent.futures as _cf
         with _cf.ThreadPoolExecutor(max_workers=1) as _pool:
-            fut = _pool.submit(run_pipeline, req.address)
+            if req.mode == "replay":
+                fut = _pool.submit(run_pipeline, "浦东新区临港新城书院社区",
+                                   typhoon_mode="replay", replay_case="bebinca",
+                                   rain_start="2024-09-14", rain_end="2024-09-17")
+            else:
+                fut = _pool.submit(run_pipeline, req.address)
             try:
                 result = fut.result(timeout=100)
             except _cf.TimeoutError:

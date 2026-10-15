@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>社区防台小助手 · AI4Climate Track05</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 * { box-sizing: border-box;}
 body { font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -62,6 +64,9 @@ vertical-align: -4px; margin-right: 10px;}
 @keyframes spin { to { transform: rotate(360deg);}}
 .elapsed { color: #1a73e8; font-weight: bold;}
 .stage { font-size: 15px; font-weight: 500;}
+.map { height: 320px; border-radius: 10px; margin-top: 14px; z-index: 0; }
+.map-legend { font-size: 12px; color: #7a8799; margin-top: 6px; }
+.map-legend i { display: inline-block; width: 22px; height: 4px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
 @media (max-width: 480px) {
 .hero h1 { font-size: 21px;}
 .search-row { flex-direction: column;}
@@ -78,20 +83,21 @@ button.go { width: 100%;}
 <div class="wrap">
 <div class="card">
 <div class="search-row">
-<input id="addr" placeholder="输入任意地址，如：深圳南山区" value="繁裕小区" onkeydown="if(event.key==='Enter')assess()">
-<button class="go" id="go" onclick="assess()">生成评估</button>
+<input id="addr" placeholder="输入任意地址，如：深圳南山区" value="繁裕小区" onkeydown="if(event.key==='Enter')assess('live')">
+<button class="go" id="go" onclick="assess('live')">生成评估</button>
 </div>
 <div class="chips">
 <button class="chip" onclick="fill('繁裕小区')">📍 繁裕小区</button>
 <button class="chip" onclick="fill('深圳南山区')">📍 深圳南山</button>
 <button class="chip" onclick="fill('上海陆家嘴')">📍 上海陆家嘴</button>
 <button class="chip" onclick="fill('广州市天河区')">📍 广州天河</button>
+      <button class="chip" onclick="assess('replay')">📊 贝碧嘉 2024 复盘</button>
 </div>
 </div>
 <div id="result"></div>
 </div>
 <script>
-function fill(v) { document.getElementById('addr').value = v; assess();}
+function fill(v) { document.getElementById('addr').value = v; assess('live'); }
 
 const LEVEL_COLOR = {'极高':'#c0392b','高':'#e67e22','中':'#d4a017','低':'#27ae60'};
 
@@ -106,9 +112,10 @@ return '<div class="gauge"><svg width="150" height="150">'
 + '</svg><div class="num"><b class="c-' + level + '">' + score + '</b><span>综合风险 / 100</span></div></div>'
 }
 
-async function assess() {
+async function assess(mode) {
 const btn = document.getElementById('go'), box = document.getElementById('result');
-const addr = document.getElementById('addr').value.trim();
+mode = mode || 'live';
+const addr = mode === 'replay' ? '贝碧嘉 2024 复盘' : document.getElementById('addr').value.trim();
 if (!addr) { box.innerHTML = '<div class="card">⚠️ 请先输入地址</div>'; return;}
 btn.disabled = true;
 const t0 = Date.now();
@@ -124,7 +131,7 @@ if (st) st.textContent = stages[Math.min(Math.floor(s / 8), stages.length - 1)];
 try {
 const r = await fetch('/api/assess', {
 method: 'POST', headers: {'Content-Type': 'application/json'},
-body: JSON.stringify({address: addr})
+body: JSON.stringify({address: addr, mode: mode})
 });
 const d = await r.json();
 clearInterval(timer);
@@ -147,7 +154,13 @@ html += '<div class="factor"><div class="row"><span>' + esc(f.name) + '</span>'
 + '<div class="why">' + esc(f.reason) + '</div></div>';
 });
 html += '<div class="src">' + srcPill('台风', d.data_sources.typhoon)
-+ srcPill('降雨', d.data_sources.rainfall) + srcPill('地形', d.data_sources.terrain) + '</div></div>';
++ srcPill('降雨', d.data_sources.rainfall) + srcPill('地形', d.data_sources.terrain) + '</div>';
+    if (d.track && d.track.points && d.track.points.length) {
+      html += '<div id="map" class="map"></div><div class="map-legend">'
+        + '<i style="background:#e74c3c"></i>实况路径 <i style="background:#2980b9"></i>官方预报路径 '
+        + '📍 评估小区</div>';
+    }
+    html += '</div>';
 html += '<div class="card timeline"><h2 style="margin-top:0">📋 居民行动指引</h2><p class="hint">' + esc(g.header) + '</p>';
 if (g.mode === 'llm') { html += '<p class="gtext">' + esc(g.text) + '</p>';}
 else {
@@ -158,6 +171,7 @@ html += '<h3></h3><ol>' + g.timelines[k].map(t => '<li>' + esc(t) + '</li>').joi
 }
 const used = ((Date.now() - t0) / 1000).toFixed(1);
 box.innerHTML = html + '<p class="hint">本次评估用时 ' + used + ' 秒</p></div>';
+    if (d.track && d.track.points && d.track.points.length && window.L) { drawMap(d.track); }
 requestAnimationFrame(() => requestAnimationFrame(() => {
 document.querySelectorAll('.bar i').forEach(el => { el.style.width = el.dataset.w + '%';});
 const arc = document.getElementById('gaugeArc');
@@ -172,6 +186,25 @@ clearInterval(timer);
 box.innerHTML = '<div class="card">❌ 请求失败：' + esc(String(e)) + '</div>';
 }
 btn.disabled = false;
+}
+function drawMap(track) {
+  const pts = track.points, com = track.community;
+  const map = L.map('map', {scrollWheelZoom: false}).setView([com.lat, com.lon], 5);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {maxZoom: 18, attribution: '&copy; OpenStreetMap'}).addTo(map);
+  const obs = pts.filter(p => p.kind !== 'forecast').map(p => [p.lat, p.lon]);
+  const fc = pts.filter(p => p.kind === 'forecast').map(p => [p.lat, p.lon]);
+  const bounds = [];
+  if (obs.length > 1) { L.polyline(obs, {color: '#e74c3c', weight: 3}).addTo(map); bounds.push(...obs); }
+  else if (obs.length === 1) { L.circleMarker(obs[0], {radius: 5, color: '#e74c3c'}).addTo(map); bounds.push(...obs); }
+  if (fc.length > 1) {
+    const joint = obs.length ? [obs[obs.length - 1], ...fc] : fc;
+    L.polyline(joint, {color: '#2980b9', weight: 3, dashArray: '8 6'}).addTo(map); bounds.push(...fc);
+  }
+  L.marker([com.lat, com.lon]).addTo(map).bindPopup('📍 评估小区').openPopup();
+  bounds.push([com.lat, com.lon]);
+  map.fitBounds(bounds, {padding: [30, 30]});
+  map.on('click', () => map.scrollWheelZoom.enable());
 }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 </script>

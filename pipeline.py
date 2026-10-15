@@ -69,11 +69,19 @@ def run_pipeline(address: str, typhoon_mode: str = "live",
     # 4) AI 指引（有 key 走 LLM，无 key 走模板降级）
     guidance = generate(risk, community, zone, context)
 
+    track_points = [
+        {"lat": pt["lat"], "lon": pt["lon"], "kind": pt.get("kind", ""),
+         "wind_ms": pt.get("wind_ms"), "time": pt.get("time", "")}
+        for pt in typhoon.data.get("points", [])
+    ]
     return {
         "community": community,
         "risk": risk,
         "guidance": guidance,
         "mode": typhoon_mode,
+        "track": {"name": typhoon.data.get("name", ""),
+                  "points": track_points,
+                  "community": {"lat": community["lat"], "lon": community["lon"]}},
         "data_sources": {
             "typhoon": typhoon.source,
             "rainfall": rainfall.source,
