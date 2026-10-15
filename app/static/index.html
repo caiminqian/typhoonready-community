@@ -16,6 +16,11 @@
   button:disabled { background: #999; }
   .factor { margin: 6px 0; } .timeline h3 { margin: 12px 0 6px; } li { margin: 4px 0; }
   .hint { color: #666; font-size: 13px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid #dfe6f0;
+    border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.9s linear infinite;
+    vertical-align: -3px; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .elapsed { color: #1a73e8; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -29,7 +34,17 @@
 <script>
 async function assess() {
   const btn = document.getElementById('go'), box = document.getElementById('result');
-  btn.disabled = true; box.innerHTML = '<div class="card">评估中…</div>';
+  btn.disabled = true;
+  const t0 = Date.now();
+  const stages = ['📍 定位地址…', '🌀 获取台风实况与预报路径…', '🌧️ 获取降雨预报…', '🤖 AI 生成行动指引…'];
+  let si = 0;
+  box.innerHTML = '<div class="card"><span class="spinner"></span><span id="stage">' + stages[0] + '</span> <span class="hint">已等待 <span class="elapsed" id="elapsed">0</span> 秒</span></div>';
+  const timer = setInterval(() => {
+    const s = Math.floor((Date.now() - t0) / 1000);
+    const e = document.getElementById('elapsed'); if (e) e.textContent = s;
+    const st = document.getElementById('stage');
+    if (st) st.textContent = stages[Math.min(Math.floor(s / 8), stages.length - 1)];
+  }, 500);
   try {
     const r = await fetch('/api/assess', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -50,9 +65,10 @@ async function assess() {
         html += '<h3>【' + names[k] + '】</h3><ol>' + g.timelines[k].map(t => '<li>' + t + '</li>').join('') + '</ol>';
       }
     }
-    box.innerHTML = html + '</div>';
+    const used = ((Date.now() - t0) / 1000).toFixed(1);
+    box.innerHTML = html + '<p class="hint">本次评估用时 ' + used + ' 秒</p></div>';
   } catch (e) { box.innerHTML = '<div class="card">❌ 请求失败：' + e + '</div>'; }
-  btn.disabled = false;
+  clearInterval(timer); btn.disabled = false;
 }
 </script>
 </body>
