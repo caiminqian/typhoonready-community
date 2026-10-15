@@ -20,11 +20,11 @@ def _get(url: str, timeout: int = 20) -> dict | list | None:
         return json.loads(resp.read().decode("utf-8"))
 
 
-def _nominatim(address: str) -> dict | None:
+def _nominatim(address: str, timeout: int = 10) -> dict | None:
     url = ("https://nominatim.openstreetmap.org/search?q="
            + urllib.parse.quote(address)
            + "&format=json&limit=1&accept-language=zh")
-    data = _get(url) or []
+    data = _get(url, timeout) or []
     if not data:
         return None
     r = data[0]
@@ -35,10 +35,10 @@ def _nominatim(address: str) -> dict | None:
             "admin": "", "display": disp}
 
 
-def _open_meteo(address: str) -> dict | None:
+def _open_meteo(address: str, timeout: int = 10) -> dict | None:
     url = ("https://geocoding-api.open-meteo.com/v1/search?name="
            + urllib.parse.quote(address) + "&count=1&language=zh&format=json")
-    data = _get(url) or {}
+    data = _get(url, timeout) or {}
     results = data.get("results") or []
     if not results:
         return None
@@ -58,16 +58,18 @@ def _variants(address: str) -> list[str]:
     return v
 
 
-def geocode(address: str, timeout: int = 20) -> dict | None:
-    """返回 {"name", "lat", "lon", "admin"}，失败返回 None。"""
-    for q in _variants(address):
-        try:
-            r = _nominatim(q)
-            if r:
-                return r
-        except Exception:
-            pass
-        time.sleep(1.1)  # Nominatim 限速要求
+def geocode(address: str, timeout: int = 10) -> dict | None:
+    """返回 {"name", "lat", "lon", "admin"}，失败返回 None。
+
+    顺序：Nominatim 先试完整地址（POI 精度好，6 秒超时速败）；
+    再走 Open-Meteo 多变体（快，城市级可靠）。
+    """
+    try:
+        r = _nominatim(address, timeout=6)
+        if r:
+            return r
+    except Exception:
+        pass
     for q in _variants(address):
         try:
             r = _open_meteo(q)
