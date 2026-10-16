@@ -41,6 +41,8 @@ button.go { background: #1a73e8; color: #fff; border: none; cursor: pointer; fon
 .hint { color: #7a8799; font-size: 13px; }
 .note { background: #fff8e1; border-left: 4px solid #f0ad4e; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 14px; line-height: 1.7; }
 h2 { margin: 0 0 10px; font-size: 20px; }
+.uq { background: #f4f7fb; border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 13.5px; color: #4a5a6e; line-height: 1.7; }
+.uq b { color: #1a73e8; }
 @media (max-width: 480px) { .map { height: 260px; } select { width: 100%; margin-bottom: 8px; } }
 </style>
 </head>
@@ -105,6 +107,14 @@ function render() {
       + '<div class="fbar"><div style="width:' + pct + '%;background:' + FCOLOR[i % 3] + '"></div></div>'
       + '<div class="freason">' + esc(f.reason) + '</div></div>';
   });
+  if (risk.uncertainty) {
+    const u = risk.uncertainty, pl = u.p_level;
+    html += '<div class="uq">🎲 <b>不确定性量化</b>（蒙特卡洛 ' + u.n + ' 次）<br>'
+      + '分数区间：' + u.score_p10 + '–' + u.score_p90 + ' 分（±' + u.score_std + '）<br>'
+      + '等级概率：低 ' + (pl['低']*100).toFixed(0) + '% · 中 ' + (pl['中']*100).toFixed(0)
+      + '% · 高 ' + (pl['高']*100).toFixed(0) + '% · 极高 ' + (pl['极高']*100).toFixed(0) + '%<br>'
+      + 'P(高及以上) = <b>' + (u.p_high_plus*100).toFixed(0) + '%</b></div>';
+  }
   html += '<div class="src">' + srcPill('台风', d.data_sources.typhoon)
     + srcPill('降雨', d.data_sources.rainfall) + srcPill('地形', d.data_sources.terrain) + '</div>';
   if (d.track && d.track.points && d.track.points.length) {
