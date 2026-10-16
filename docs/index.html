@@ -43,6 +43,11 @@ button.go { background: #1a73e8; color: #fff; border: none; cursor: pointer; fon
 h2 { margin: 0 0 10px; font-size: 20px; }
 .uq { background: #f4f7fb; border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 13.5px; color: #4a5a6e; line-height: 1.7; }
 .uq b { color: #1a73e8; }
+.topact { background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%); border: 2px solid #f0ad4e; border-radius: 12px; padding: 16px; margin: 4px 0 14px; }
+.topact .ta-head { font-size: 13px; color: #b26a00; font-weight: 700; margin-bottom: 6px; }
+.topact .ta-text { font-size: 19px; font-weight: 800; color: #7a4a00; line-height: 1.5; margin-top: 10px; }
+.topact .ta-text:first-of-type { margin-top: 0; }
+.topact .ta-reason { font-size: 13px; color: #8a6d3b; margin-top: 6px; }
 @media (max-width: 480px) { .map { height: 260px; } select { width: 100%; margin-bottom: 8px; } }
 </style>
 </head>
@@ -121,11 +126,13 @@ function render() {
     html += '<div id="map" class="map"></div><div class="map-legend" id="mapLegend"></div>';
   }
   html += '</div><div class="card"><h2>📋 居民行动指引</h2><p class="hint">' + esc(g.header) + '</p>';
-  if (g.top_action) {
-    html += '<div class="topact"><div class="ta-head">⭐ 今晚最重要的一件事</div>'
-      + '<div class="ta-text">' + esc(g.top_action.icon) + ' ' + esc(g.top_action.text) + '</div>'
-      + '<div class="ta-reason">' + esc(g.top_action.reason) + '</div></div>';
-  }
+    if (g.top_actions && g.top_actions.length) {
+      const taTitle = g.top_actions.length > 1 ? '⭐ 今晚最重要的几件事' : '⭐ 今晚最重要的一件事';
+      html += '<div class="topact"><div class="ta-head">' + taTitle + '</div>'
+        + g.top_actions.map(a => '<div class="ta-text">' + esc(a.icon) + ' ' + esc(a.text) + '</div>'
+          + '<div class="ta-reason">' + esc(a.reason) + '</div>').join('')
+        + '</div>';
+    }
   if (g.mode === 'llm' && g.text) {
     html += '<div class="gtext">' + esc(g.text) + '</div>';
   } else if (g.timelines) {
