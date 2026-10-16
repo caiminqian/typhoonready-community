@@ -64,6 +64,12 @@ def _template_guidance(risk: dict, community: dict, zone: dict, context: dict) -
                f"{context['min_dist_km']:.0f} 公里，"
                f"最大风速 {context['max_wind_ms']:.0f} 米/秒，"
                f"未来3天最大24小时降雨 {context['max_rain_mm']:.0f} 毫米。")
+    # 压线从严：点估计为中/低，但蒙特卡洛显示高及以上概率不可忽略时，加严提醒
+    uq = risk.get("uncertainty") or {}
+    p_hp = uq.get("p_high_plus", 0)
+    if level in ("中", "低") and p_hp >= 0.3:
+        items["72h"] = [f"注意：综合评分为{level}，但不确定性分析显示高风险概率达 "
+                        f"{p_hp:.0%}，建议按高一档做防范"] + items["72h"]
     return {"mode": "template", "header": FALLBACK_HEADER,
             "summary": summary, "timelines": items}
 

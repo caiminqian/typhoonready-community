@@ -66,6 +66,12 @@ def run_pipeline(address: str, typhoon_mode: str = "live",
         "max_rain_mm": max((d.get("mm_24h", 0) for d in rainfall.data.get("daily", [])), default=0),
     }
 
+    # 3b) 不确定性量化：蒙特卡洛传播输入与权重不确定性（毫秒级）
+    from risk_engine.uncertainty import quantify
+    risk["uncertainty"] = quantify(
+        context["min_dist_km"], context["max_wind_ms"], context["max_rain_mm"],
+        int(zone.get("zone_level", 0)))
+
     # 4) AI 指引（有 key 走 LLM，无 key 走模板降级）
     guidance = generate(risk, community, zone, context)
 
