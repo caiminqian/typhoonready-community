@@ -121,6 +121,11 @@ function render() {
     html += '<div id="map" class="map"></div><div class="map-legend" id="mapLegend"></div>';
   }
   html += '</div><div class="card"><h2>📋 居民行动指引</h2><p class="hint">' + esc(g.header) + '</p>';
+  if (g.top_action) {
+    html += '<div class="topact"><div class="ta-head">⭐ 今晚最重要的一件事</div>'
+      + '<div class="ta-text">' + esc(g.top_action.icon) + ' ' + esc(g.top_action.text) + '</div>'
+      + '<div class="ta-reason">' + esc(g.top_action.reason) + '</div></div>';
+  }
   if (g.mode === 'llm' && g.text) {
     html += '<div class="gtext">' + esc(g.text) + '</div>';
   } else if (g.timelines) {

@@ -42,6 +42,42 @@ def _call_llm(system: str, user: str) -> str:
     return data["choices"][0]["message"]["content"]
 
 
+def top_action(risk: dict, context: dict, zone: dict) -> dict:
+    """一句话行动：从风险因子提炼"今晚最重要的一件事"。
+    规则确定性推导，与 LLM/模板模式无关，保证每次都有这一句人话。"""
+    level = risk["level"]
+    factors = {f["name"]: f["score"] for f in risk.get("factors", [])}
+    t = factors.get("台风接近度", 0)
+    r = factors.get("降雨强度", 0)
+    terr = factors.get("地形内涝", 0)
+    mm = context["max_rain_mm"]
+    zl = zone.get("zone_level", 0)
+    if level in ("极高", "高"):
+        if terr >= 20:
+            return {"icon": "🚗",
+                    "text": "今晚就把车挪到地势高的地方",
+                    "reason": f"内涝 {zl} 级＋未来3天最大降雨 {mm:.0f} 毫米，低洼停车=泡水"}
+        if t >= 32:
+            return {"icon": "🪟",
+                    "text": "关好门窗，阳台杂物收进室内",
+                    "reason": f"台风最近距 {context['min_dist_km']:.0f} 公里，"
+                              f"最大风速 {context['max_wind_ms']:.0f} 米/秒"}
+        return {"icon": "🥬",
+                "text": "囤够3天的饮用水、干粮和常用药",
+                "reason": f"综合风险{level}，未来3天最大降雨 {mm:.0f} 毫米"}
+    if level == "中":
+        if r >= 12 or terr >= 20:
+            return {"icon": "🌧️",
+                    "text": "别把车停在低洼处，雨大再挪就来不及了",
+                    "reason": f"未来3天最大降雨 {mm:.0f} 毫米，内涝 {zl} 级"}
+        return {"icon": "📱",
+                "text": "留意预报更新，雨势加大再升级防范",
+                "reason": f"当前综合风险{level}"}
+    return {"icon": "✅",
+            "text": "常规防范即可，该干嘛干嘛",
+            "reason": "台风距离远、降雨小，风险较低"}
+
+
 def _template_guidance(risk: dict, community: dict, zone: dict, context: dict) -> dict:
     """降级模板：风险等级定制 + 数据驱动开头，不说空话。"""
     level = risk["level"]
@@ -71,7 +107,8 @@ def _template_guidance(risk: dict, community: dict, zone: dict, context: dict) -
         items["72h"] = [f"注意：综合评分为{level}，但不确定性分析显示高风险概率达 "
                         f"{p_hp:.0%}，建议按高一档做防范"] + items["72h"]
     return {"mode": "template", "header": FALLBACK_HEADER,
-            "summary": summary, "timelines": items}
+            "summary": summary, "timelines": items,
+            "top_action": top_action(risk, context, zone)}
 
 
 def generate(risk: dict, community: dict, zone: dict, context: dict) -> dict:
@@ -91,7 +128,8 @@ def generate(risk: dict, community: dict, zone: dict, context: dict) -> dict:
     if os.environ.get("AI4C_LLM_API_KEY"):
         try:
             text = _call_llm(SYSTEM_PROMPT, user_prompt)
-            return {"mode": "llm", "header": "（AI 生成版指引）", "text": text}
+            return {"mode": "llm", "header": "（AI 生成版指引）", "text": text,
+                    "top_action": top_action(risk, context, zone)}
         except Exception as e:
             # LLM 调用失败也降级，不让整条链路挂掉
             result = _template_guidance(risk, community, zone, context)

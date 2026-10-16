@@ -75,6 +75,10 @@ vertical-align: -4px; margin-right: 10px;}
 .tl-summary { background: #eef4fb; border-left: 4px solid #2a86d4; padding: 10px 14px; font-size: 14px; border-radius: 0 8px 8px 0; margin: 4px 0 6px; line-height: 1.7; }
 .uq { background: #f4f7fb; border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 13.5px; color: #4a5a6e; line-height: 1.7; }
 .uq b { color: #1a73e8; }
+.topact { background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%); border: 2px solid #f0ad4e; border-radius: 12px; padding: 16px; margin: 4px 0 14px; }
+.topact .ta-head { font-size: 13px; color: #b26a00; font-weight: 700; margin-bottom: 6px; }
+.topact .ta-text { font-size: 20px; font-weight: 800; color: #7a4a00; line-height: 1.5; }
+.topact .ta-reason { font-size: 13px; color: #8a6d3b; margin-top: 6px; }
 @media (max-width: 480px) {
 .hero h1 { font-size: 21px;}
 .search-row { flex-direction: column;}
@@ -177,6 +181,11 @@ html += '<div class="src">' + srcPill('台风', d.data_sources.typhoon)
     }
     html += '</div>';
 html += '<div class="card timeline"><h2 style="margin-top:0">📋 居民行动指引</h2><p class="hint">' + esc(g.header) + '</p>';
+    if (g.top_action) {
+      html += '<div class="topact"><div class="ta-head">⭐ 今晚最重要的一件事</div>'
+        + '<div class="ta-text">' + esc(g.top_action.icon) + ' ' + esc(g.top_action.text) + '</div>'
+        + '<div class="ta-reason">' + esc(g.top_action.reason) + '</div></div>';
+    }
 if (g.mode === 'llm') { html += '<p class="gtext">' + esc(g.text) + '</p>';}
     else {
       const names = {'72h': ['未来72小时 · 提前准备', 'tl-72'], '24h': ['未来24小时 · 加固防范', 'tl-24'], '6h': ['未来6小时 · 紧急避险', 'tl-6']};
