@@ -48,6 +48,8 @@ h2 { margin: 0 0 10px; font-size: 20px; }
 .topact .ta-text { font-size: 19px; font-weight: 800; color: #7a4a00; line-height: 1.5; margin-top: 10px; }
 .topact .ta-text:first-of-type { margin-top: 0; }
 .topact .ta-reason { font-size: 13px; color: #8a6d3b; margin-top: 6px; }
+.speak-btn { background: #f0ad4e; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+.speak-btn:disabled { background: #ccc; cursor: wait; }
 @media (max-width: 480px) { .map { height: 260px; } select { width: 100%; margin-bottom: 8px; } }
 </style>
 </head>
@@ -98,8 +100,21 @@ function drawMap(track) {
   if (lg) { lg.innerHTML = '<i style="background:#e74c3c"></i>贝碧嘉真实路径 🔵 评估小区'; }
 }
 const FCOLOR = ['#2a86d4', '#e67e22', '#27ae60'];
+let _staticKey = null;
+function speakStatic() {
+  const btn = document.getElementById('speakBtn');
+  if (!_staticKey || !btn || btn.disabled) return;
+  btn.disabled = true; btn.textContent = '🔊 播放中…';
+  const au = new Audio('voice/' + _staticKey + '.mp3'); au.playbackRate = 0.95;
+  const done = () => { btn.disabled = false; btn.textContent = '🔊 语音播报'; };
+  au.onended = done;
+  au.onerror = () => { done(); alert('播放失败'); };
+  au.play();
+}
+
 function render() {
   const k = document.getElementById('sel').value;
+  _staticKey = k;
   const d = DATA[k]; if (!d) return;
   const risk = d.risk, g = d.guidance;
   let html = '<div class="card"><h2>' + esc(d.name) + '</h2>'
@@ -131,7 +146,7 @@ function render() {
       html += '<div class="topact"><div class="ta-head">' + taTitle + '</div>'
         + g.top_actions.map(a => '<div class="ta-text">' + esc(a.icon) + ' ' + esc(a.text) + '</div>'
           + '<div class="ta-reason">' + esc(a.reason) + '</div>').join('')
-        + '</div>';
+        + '<button class="speak-btn" id="speakBtn" onclick="speakStatic()">🔊 语音播报</button></div>';
     }
   if (g.mode === 'llm' && g.text) {
     html += '<div class="gtext">' + esc(g.text) + '</div>';
