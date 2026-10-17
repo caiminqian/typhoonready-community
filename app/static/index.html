@@ -80,6 +80,8 @@ vertical-align: -4px; margin-right: 10px;}
 .topact .ta-text { font-size: 19px; font-weight: 800; color: #7a4a00; line-height: 1.5; margin-top: 10px; }
 .topact .ta-text:first-of-type { margin-top: 0; }
 .topact .ta-reason { font-size: 13px; color: #8a6d3b; margin-top: 6px; }
+.speak-btn { background: #f0ad4e; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+.speak-btn:disabled { background: #ccc; cursor: wait; }
 @media (max-width: 480px) {
 .hero h1 { font-size: 21px;}
 .search-row { flex-direction: column;}
@@ -125,6 +127,32 @@ return '<div class="gauge"><svg width="150" height="150">'
 + '</svg><div class="num"><b class="c-' + level + '">' + score + '</b><span>综合风险 / 100</span></div></div>'
 }
 
+function speakTop() {
+  const btn = document.getElementById('speakBtn');
+  if (!window._lastResult || !btn || btn.disabled) return;
+  const r = window._lastResult;
+  const tas = (r.guidance && r.guidance.top_actions) || [];
+  const nums = ['一','二','三'];
+  let text = '社区防台小助手播报。' + r.community.name + '当前风险等级' + r.risk.level + '，' + Math.round(r.risk.score) + '分。';
+  if (tas.length === 1) text += '今晚最重要的一件事：' + tas[0].text + '。';
+  else if (tas.length > 1) {
+    text += '今晚最重要的' + tas.length + '件事：';
+    tas.slice(0, 3).forEach((a, i) => { text += '第' + nums[i] + '，' + a.text + '；'; });
+  }
+  btn.disabled = true; btn.textContent = '🔊 合成中…';
+  fetch('/api/speak', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text})})
+    .then(x => x.json()).then(j => {
+      if (j.audio_url) {
+        const au = new Audio(j.audio_url); au.playbackRate = 0.95;
+        const done = () => { btn.disabled = false; btn.textContent = '🔊 语音播报'; };
+        au.onended = done;
+        au.onerror = () => { done(); alert('播放失败'); };
+        au.play(); btn.textContent = '🔊 播放中…';
+      } else { alert(j.error || '合成失败'); btn.disabled = false; btn.textContent = '🔊 语音播报'; }
+    }).catch(() => { alert('网络错误'); btn.disabled = false; btn.textContent = '🔊 语音播报'; });
+}
+
 async function assess(mode) {
 const btn = document.getElementById('go'), box = document.getElementById('result');
 mode = mode || 'live';
@@ -147,6 +175,7 @@ method: 'POST', headers: {'Content-Type': 'application/json'},
 body: JSON.stringify({address: addr, mode: mode})
 });
 const d = await r.json();
+window._lastResult = d;
 clearInterval(timer);
 if (!r.ok) {
 box.innerHTML = '<div class="card">' + (r.status === 429? '⏳ ': '❌ ') + esc(d.error) + '</div>';
@@ -187,7 +216,7 @@ html += '<div class="card timeline"><h2 style="margin-top:0">📋 居民行动�
       html += '<div class="topact"><div class="ta-head">' + taTitle + '</div>'
         + g.top_actions.map(a => '<div class="ta-text">' + esc(a.icon) + ' ' + esc(a.text) + '</div>'
           + '<div class="ta-reason">' + esc(a.reason) + '</div>').join('')
-        + '</div>';
+        + '<button class="speak-btn" id="speakBtn" onclick="speakTop()">🔊 语音播报</button></div>';
     }
 if (g.mode === 'llm') { html += '<p class="gtext">' + esc(g.text) + '</p>';}
     else {

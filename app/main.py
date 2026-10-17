@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from data_ingest import terrain
 from pipeline import run_pipeline
+from voice.broadcaster import MAX_CHARS, cache_key, synthesize
 
 # 简单限流：同一 IP 60 秒内只允许一次评估（防刷 + 省上游配额）
 _RATE: dict[str, float] = {}
@@ -25,6 +26,10 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 class AssessRequest(BaseModel):
     address: str = ""
     mode: str = "live"  # live | replay（贝碧嘉 2024 复盘）
+
+
+class SpeakRequest(BaseModel):
+    text: str = ""  # 前端拼好的播报文本（≤500字）
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -67,3 +72,33 @@ def assess(req: AssessRequest, request: Request):
         return JSONResponse(result)
     except ValueError as e:
         return JSONResponse({"error": str(e)}, status_code=400)
+
+
+# 语音缓存目录
+_VOICE_DIR = Path(__file__).resolve().parent / "static" / "voice"
+_VOICE_DIR.mkdir(exist_ok=True)
+
+
+@app.post("/api/speak")
+def speak(req: SpeakRequest, request: Request):
+    """Edge TTS 语音合成：文本→MP3。按文本哈希缓存，同一文本只合成一次。"""
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    last = _RATE.get(f"speak:{ip}", 0)
+    if now - last < 10:  # 语音接口 10 秒一次
+        return JSONResponse({"error": "播报太频繁，请稍后再试"}, status_code=429)
+    _RATE[f"speak:{ip}"] = now
+    text = (req.text or "").strip()
+    if not text:
+        return JSONResponse({"error": "播报文本为空"}, status_code=400)
+    if len(text) > MAX_CHARS:
+        return JSONResponse({"error": f"播报文本超长（{len(text)}>{MAX_CHARS}）"},
+                            status_code=400)
+    key = cache_key(text)
+    mp3 = _VOICE_DIR / f"{key}.mp3"
+    if not mp3.exists():
+        try:
+            synthesize(text, str(mp3))
+        except Exception as e:
+            return JSONResponse({"error": f"语音合成失败：{e}"}, status_code=502)
+    return JSONResponse({"audio_url": f"/static/voice/{key}.mp3"})
