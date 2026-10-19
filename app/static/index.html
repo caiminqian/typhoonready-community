@@ -54,6 +54,7 @@ transition: width 1s cubic-bezier(.22,.8,.3,1); width: 0;}
 .pill { font-size: 12px; padding: 4px 10px; border-radius: 12px; background: #eef4fb; color: #47617e;}
 .pill.live { background: #e6f7ec; color: #1c7a3d;}
 .pill.mock { background: #fdf3e3; color: #a86a12;}
+.pill.replay { background: #e8f0fe; color: #1a73e8; }
 .pill.link { text-decoration: underline; cursor: pointer;}
 .timeline h3 { margin: 16px 0 8px; font-size: 16px;}
 .timeline li { margin: 6px 0; font-size: 14.5px; line-height: 1.65;}
@@ -151,8 +152,8 @@ return '<div class="gauge"><svg width="150" height="150">'
 
 function speakTop() {
   const btn = document.getElementById('speakBtn');
-  if (!window._lastResult || !btn || btn.disabled) return;
   const r = window._lastResult;
+  if (!r || !r.community || !r.risk || !btn || btn.disabled) return;
   const tas = (r.guidance && r.guidance.top_actions) || [];
   const nums = ['一','二','三'];
   let text = '社区防台小助手播报。' + r.community.name + '当前风险等级' + r.risk.level + '，' + Math.round(r.risk.score) + '分。';
@@ -206,10 +207,13 @@ btn.disabled = false; return;
 const risk = d.risk, g = d.guidance;
 const _srcLinks = {'台风': 'https://typhoon.nmc.cn/web.html', '降雨': 'https://open-meteo.com/'};
 const srcPill = (k, v) => {
-  const cls = v === 'live' ? 'live' : (v === 'mock' ? 'mock' : '');
+  const cls = v === 'live' ? 'live' : (v === 'replay' ? 'replay' : 'mock');
+  const label = v === 'live' ? '实时' : (v === 'replay' ? '复盘' : '模拟');
   const url = _srcLinks[k];
-  const title = k === '地形' ? ' title="静态底图：等级/高程/历史涝点，无公开实时接口"' : '';
-  const body = k + '：' + v;
+  const title = k === '地形'
+    ? ' title="' + (v === 'estimated' ? '该地址无内置内涝底图，地形分按默认估计值计算，仅供参考' : '静态底图：等级/高程/历史涝点，无公开实时接口') + '"'
+    : (v === 'estimated' ? ' title="估算值，仅供参考"' : '');
+  const body = k + ' · ' + label;
   if (url) return '<a class="pill ' + cls + ' link" href="' + url + '" target="_blank" rel="noopener noreferrer">' + body + '</a>';
   return '<span class="pill ' + cls + '"' + title + '>' + body + '</span>';
 };
@@ -246,6 +250,7 @@ html += '<div class="card timeline"><h2 style="margin-top:0">📋 居民行动�
         + g.top_actions.map(a => '<div class="ta-text">' + esc(a.icon) + ' ' + esc(a.text) + '</div>'
           + '<div class="ta-reason">' + esc(a.reason) + '</div>').join('')
         + '<button class="speak-btn" id="speakBtn" onclick="speakTop()">🔊 语音播报</button></div>';
+    }
     {
       const shelterTip = risk.level === '低'
         ? '🛟 <b>避险指引</b>：未雨绸缪，提前记下附近避难场所和停车场<br>'
@@ -255,8 +260,7 @@ html += '<div class="card timeline"><h2 style="margin-top:0">📋 居民行动�
         + '<a class="shelter-btn" target="_blank" href="' + amapSearch('停车场', d.community.lat, d.community.lon) + '">🅿️ 找高处停车场</a>'
         + '<div class="hint">跳转高德地图，按距离排序，选地势高的去</div></div>';
     }
-    }
-if (g.mode === 'llm') { html += '<div class="gtext">' + md(g.text) + '</div>';}
+if (g.mode === 'llm' && g.text) { html += '<div class="gtext">' + md(g.text) + '</div>';}
     else {
       const names = {'72h': ['未来72小时 · 提前准备', 'tl-72'], '24h': ['未来24小时 · 加固防范', 'tl-24'], '6h': ['未来6小时 · 紧急避险', 'tl-6']};
       if (g.summary) { html += '<div class="tl-summary">📌 ' + esc(g.summary) + '</div>'; }
@@ -301,13 +305,13 @@ function drawMap(track) {
   bounds.push([com.lat, com.lon]);
   map.fitBounds(bounds, {padding: [30, 30]});
   map.on('click', () => map.scrollWheelZoom.enable());
-}
   const lg = document.getElementById('mapLegend');
   if (lg) {
     lg.innerHTML = '<i style="background:#e74c3c"></i>实况路径 '
       + (fc.length > 1 ? '<i style="background:#2980b9"></i>官方预报路径 ' : '')
       + '🔵 评估小区';
   }
+}
 function amapSearch(keyword, lat, lon) {
   return 'https://uri.amap.com/search?keyword=' + encodeURIComponent(keyword)
     + '&center=' + lon.toFixed(4) + ',' + lat.toFixed(4) + '&radius=3000';
