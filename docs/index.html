@@ -154,8 +154,11 @@ function render() {
         + g.top_actions.map(a => '<div class="ta-text">' + esc(a.icon) + ' ' + esc(a.text) + '</div>'
           + '<div class="ta-reason">' + esc(a.reason) + '</div>').join('')
         + '<button class="speak-btn" id="speakBtn" onclick="speakStatic()">🔊 语音播报</button></div>';
-    if (risk.level !== '低') {
-      html += '<div class="shelter">🛟 <b>避险指引</b>：暴雨内涝时，人员往高处走、车往高处停<br>'
+    {
+      const shelterTip = risk.level === '低'
+        ? '🛟 <b>避险指引</b>：未雨绸缪，提前记下附近避难场所和停车场<br>'
+        : '🛟 <b>避险指引</b>：暴雨内涝时，人员往高处走、车往高处停<br>';
+      html += '<div class="shelter">' + shelterTip
         + '<a class="shelter-btn" target="_blank" href="' + amapSearch('应急避难场所', d.lat, d.lon) + '">📍 找附近避难场所</a>'
         + '<a class="shelter-btn" target="_blank" href="' + amapSearch('停车场', d.lat, d.lon) + '">🅿️ 找高处停车场</a>'
         + '<div class="hint">跳转高德地图，按距离排序，选地势高的去</div></div>';
