@@ -31,7 +31,12 @@ button.go { background: #1a73e8; color: #fff; border: none; cursor: pointer; fon
 .src { margin-top: 10px; }
 .pill { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 12px; margin-right: 6px; }
 .pill.live { background: #e6f4ea; color: #1e7e34; } .pill.mock { background: #fef3e2; color: #b26a00; } .pill.replay { background: #e8f0fe; color: #1a73e8; }
-.gtext { white-space: pre-wrap; line-height: 1.8; font-size: 15px; }
+.gtext { line-height: 1.8; font-size: 15px; }
+.md-h { font-size: 16px; font-weight: 800; margin: 14px 0 8px; color: #1a3a5c; }
+.md-p { font-size: 14.5px; line-height: 1.8; margin: 8px 0; color: #333; }
+.md-ul { margin: 8px 0; padding-left: 22px; }
+.md-ul li { margin: 6px 0; font-size: 14.5px; line-height: 1.7; color: #333; }
+.md-hr { border: none; border-top: 1px solid #e6ecf3; margin: 14px 0; }
 .tl { border-radius: 12px; margin: 12px 0; overflow: hidden; padding: 4px 0 6px; }
 .tl-72 { background: #e8f0fe; }
 .tl-24 { background: #fff3e0; }
@@ -97,6 +102,27 @@ fetch('results.json').then(r => r.json()).then(d => {
 function amapSearch(keyword, lat, lon) {
   return 'https://uri.amap.com/search?keyword=' + encodeURIComponent(keyword)
     + '&center=' + lon.toFixed(4) + ',' + lat.toFixed(4) + '&radius=3000';
+}
+function md(t) {
+  const lines = esc(t).split('\n');
+  let html = '', inList = false;
+  for (let ln of lines) {
+    let l = ln.trim();
+    if (/^---+$/.test(l)) { if (inList) { html += '</ul>'; inList = false; } html += '<hr class="md-hr">'; continue; }
+    let m4 = l.match(/^####\s+(.*)/); if (m4) { if (inList) { html += '</ul>'; inList = false; } html += '<h4 class="md-h">' + inlineMd(m4[1]) + '</h4>'; continue; }
+    let m3 = l.match(/^###\s+(.*)/); if (m3) { if (inList) { html += '</ul>'; inList = false; } html += '<h3 class="md-h">' + inlineMd(m3[1]) + '</h3>'; continue; }
+    let m2 = l.match(/^##\s+(.*)/); if (m2) { if (inList) { html += '</ul>'; inList = false; } html += '<h2 class="md-h">' + inlineMd(m2[1]) + '</h2>'; continue; }
+    let ml = l.match(/^[-*•]\s+(.*)/); if (ml) { if (!inList) { html += '<ul class="md-ul">'; inList = true; } html += '<li>' + inlineMd(ml[1]) + '</li>'; continue; }
+    let mo = l.match(/^(\d+)[.、]\s+(.*)/); if (mo) { if (!inList) { html += '<ul class="md-ul">'; inList = true; } html += '<li>' + inlineMd(mo[2]) + '</li>'; continue; }
+    if (l === '') { if (inList) { html += '</ul>'; inList = false; } continue; }
+    if (inList) { html += '</ul>'; inList = false; }
+    html += '<p class="md-p">' + inlineMd(l) + '</p>';
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+function inlineMd(s) {
+  return s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function srcPill(k, v) {
@@ -177,7 +203,7 @@ function render() {
     }
     }
   if (g.mode === 'llm' && g.text) {
-    html += '<div class="gtext">' + esc(g.text) + '</div>';
+    html += '<div class="gtext">' + md(g.text) + '</div>';
   } else if (g.timelines) {
     const names = {'72h': ['未来72小时 · 提前准备', 'tl-72'], '24h': ['未来24小时 · 加固防范', 'tl-24'], '6h': ['未来6小时 · 紧急避险', 'tl-6']};
     if (g.summary) { html += '<div class="tl-summary">📌 ' + esc(g.summary) + '</div>'; }
