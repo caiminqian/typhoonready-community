@@ -67,11 +67,23 @@ vertical-align: -4px; margin-right: 10px;}
 .map { height: 320px; border-radius: 10px; margin-top: 14px; z-index: 0; }
 .map-legend { font-size: 12px; color: #7a8799; margin-top: 6px; }
 .map-legend i { display: inline-block; width: 22px; height: 4px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
-.tl { border: 1px solid #e6ecf3; border-radius: 10px; margin: 12px 0; overflow: hidden; }
-.tl-head { padding: 9px 14px; font-weight: 700; color: #fff; font-size: 15px; }
-.tl-72 { background: #2a86d4; } .tl-24 { background: #e67e22; } .tl-6 { background: #c0392b; }
-.tl-list { margin: 0; padding: 10px 14px 10px 38px; background: #fbfcfe; }
-.tl-list li { margin: 8px 0; font-size: 14.5px; line-height: 1.65; }
+.tl { border-radius: 12px; margin: 12px 0; overflow: hidden; padding: 4px 0 6px; }
+.tl-72 { background: #e8f0fe; }
+.tl-24 { background: #fff3e0; }
+.tl-6 { background: #fce8e8; }
+.tl-head { padding: 10px 16px 2px; font-weight: 800; font-size: 15px; }
+.tl-72 .tl-head { color: #1a73e8; }
+.tl-24 .tl-head { color: #c77800; }
+.tl-6 .tl-head { color: #d93025; }
+
+.tl-list { margin: 0; padding: 6px 16px 10px 16px; list-style: none; }
+.tl-list li { margin: 9px 0; font-size: 14.5px; line-height: 1.65; padding-left: 30px; position: relative; color: #333; }
+.tl-list li::before { content: attr(data-n); position: absolute; left: 0; top: 1px;
+  width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; }
+.tl-72 .tl-list li::before { background: #1a73e8; }
+.tl-24 .tl-list li::before { background: #e69500; }
+.tl-6 .tl-list li::before { background: #d93025; }
 .tl-summary { background: #eef4fb; border-left: 4px solid #2a86d4; padding: 10px 14px; font-size: 14px; border-radius: 0 8px 8px 0; margin: 4px 0 6px; line-height: 1.7; }
 .uq { background: #f4f7fb; border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 13.5px; color: #4a5a6e; line-height: 1.7; }
 .uq b { color: #1a73e8; }
@@ -235,8 +247,8 @@ if (g.mode === 'llm') { html += '<p class="gtext">' + esc(g.text) + '</p>';}
       const names = {'72h': ['未来72小时 · 提前准备', 'tl-72'], '24h': ['未来24小时 · 加固防范', 'tl-24'], '6h': ['未来6小时 · 紧急避险', 'tl-6']};
       if (g.summary) { html += '<div class="tl-summary">📌 ' + esc(g.summary) + '</div>'; }
       for (const k of ['72h','24h','6h']) {
-        html += '<div class="tl"><div class="tl-head ' + names[k][1] + '">' + names[k][0] + '</div>'
-          + '<ol class="tl-list">' + g.timelines[k].map(t => '<li>' + esc(t) + '</li>').join('') + '</ol></div>';
+        html += '<div class="tl ' + names[k][1] + '"><div class="tl-head">' + names[k][0] + '</div>'
+          + '<ol class="tl-list">' + g.timelines[k].map((t, i) => '<li data-n="' + (i+1) + '">' + esc(t) + '</li>').join('') + '</ol></div>';
       }
     }
 const used = ((Date.now() - t0) / 1000).toFixed(1);
