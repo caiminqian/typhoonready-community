@@ -50,6 +50,9 @@ h2 { margin: 0 0 10px; font-size: 20px; }
 .topact .ta-reason { font-size: 13px; color: #8a6d3b; margin-top: 6px; }
 .speak-btn { background: #f0ad4e; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
 .speak-btn:disabled { background: #ccc; cursor: wait; }
+.shelter { background: #e8f5e9; border-radius: 8px; padding: 12px 14px; margin: 10px 0; font-size: 14px; color: #2e5a32; line-height: 1.7; }
+.shelter b { color: #1b7a3d; }
+.shelter-btn { display: inline-block; background: #1b7a3d; color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 700; text-decoration: none; margin: 6px 8px 0 0; }
 @media (max-width: 480px) { .map { height: 260px; } select { width: 100%; margin-bottom: 8px; } }
 </style>
 </head>
@@ -79,6 +82,10 @@ fetch('results.json').then(r => r.json()).then(d => {
   });
   render();
 });
+function amapSearch(keyword, lat, lon) {
+  return 'https://uri.amap.com/search?keyword=' + encodeURIComponent(keyword)
+    + '&center=' + lon.toFixed(4) + ',' + lat.toFixed(4) + '&radius=3000';
+}
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function srcPill(k, v) {
   const cls = v === 'live' ? 'live' : (v === 'replay' ? 'replay' : 'mock');
@@ -147,6 +154,12 @@ function render() {
         + g.top_actions.map(a => '<div class="ta-text">' + esc(a.icon) + ' ' + esc(a.text) + '</div>'
           + '<div class="ta-reason">' + esc(a.reason) + '</div>').join('')
         + '<button class="speak-btn" id="speakBtn" onclick="speakStatic()">🔊 语音播报</button></div>';
+    if (risk.level !== '低') {
+      html += '<div class="shelter">🛟 <b>避险指引</b>：暴雨内涝时，人员往高处走、车往高处停<br>'
+        + '<a class="shelter-btn" target="_blank" href="' + amapSearch('应急避难场所', d.lat, d.lon) + '">📍 找附近避难场所</a>'
+        + '<a class="shelter-btn" target="_blank" href="' + amapSearch('停车场', d.lat, d.lon) + '">🅿️ 找高处停车场</a>'
+        + '<div class="hint">跳转高德地图，按距离排序，选地势高的去</div></div>';
+    }
     }
   if (g.mode === 'llm' && g.text) {
     html += '<div class="gtext">' + esc(g.text) + '</div>';
