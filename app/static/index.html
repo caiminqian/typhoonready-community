@@ -54,6 +54,7 @@ transition: width 1s cubic-bezier(.22,.8,.3,1); width: 0;}
 .pill { font-size: 12px; padding: 4px 10px; border-radius: 12px; background: #eef4fb; color: #47617e;}
 .pill.live { background: #e6f7ec; color: #1c7a3d;}
 .pill.mock { background: #fdf3e3; color: #a86a12;}
+.pill.link { text-decoration: underline; cursor: pointer;}
 .timeline h3 { margin: 16px 0 8px; font-size: 16px;}
 .timeline li { margin: 6px 0; font-size: 14.5px; line-height: 1.65;}
 .timeline p.gtext { font-size: 14.5px; line-height: 1.8; }
@@ -203,8 +204,15 @@ box.innerHTML = '<div class="card">' + (r.status === 429? '⏳ ': '❌ ') + esc(
 btn.disabled = false; return;
 }
 const risk = d.risk, g = d.guidance;
-const srcPill = (k, v) => '<span class="pill ' + (v === 'live'? 'live': (v === 'mock'? 'mock': '')) + '">'
-+ k + '：' + v + '</span>';
+const _srcLinks = {'台风': 'https://typhoon.nmc.cn/web.html', '降雨': 'https://open-meteo.com/'};
+const srcPill = (k, v) => {
+  const cls = v === 'live' ? 'live' : (v === 'mock' ? 'mock' : '');
+  const url = _srcLinks[k];
+  const title = k === '地形' ? ' title="静态底图：等级/高程/历史涝点，无公开实时接口"' : '';
+  const body = k + '：' + v;
+  if (url) return '<a class="pill ' + cls + ' link" href="' + url + '" target="_blank" rel="noopener noreferrer">' + body + '</a>';
+  return '<span class="pill ' + cls + '"' + title + '>' + body + '</span>';
+};
 let html = '<div class="card"><h2 style="margin:0 0 12px">' + esc(d.community.name) + '</h2>'
 + '<div class="gauge-wrap">' + gaugeSVG(risk.score, risk.level)
 + '<div><span class="badge level-' + risk.level + '">' + risk.level + '风险</span>'

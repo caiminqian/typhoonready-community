@@ -30,7 +30,7 @@ button.go { background: #1a73e8; color: #fff; border: none; cursor: pointer; fon
 .map-legend i { display: inline-block; width: 22px; height: 4px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
 .src { margin-top: 10px; }
 .pill { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 12px; margin-right: 6px; }
-.pill.live { background: #e6f4ea; color: #1e7e34; } .pill.mock { background: #fef3e2; color: #b26a00; } .pill.replay { background: #e8f0fe; color: #1a73e8; }
+.pill.live { background: #e6f4ea; color: #1e7e34; } .pill.mock { background: #fef3e2; color: #b26a00; } .pill.replay { background: #e8f0fe; color: #1a73e8; } .pill.link { text-decoration: underline; cursor: pointer; }
 .gtext { line-height: 1.8; font-size: 15px; }
 .md-h { font-size: 16px; font-weight: 800; margin: 14px 0 8px; color: #1a3a5c; }
 .md-p { font-size: 14.5px; line-height: 1.8; margin: 8px 0; color: #333; }
@@ -129,7 +129,12 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&
 function srcPill(k, v) {
   const cls = v === 'live' ? 'live' : (v === 'replay' ? 'replay' : 'mock');
   const label = v === 'live' ? '实时' : (v === 'replay' ? '复盘' : '模拟');
-  return '<span class="pill ' + cls + '">' + k + ' · ' + label + '</span>';
+  const urls = {'台风': 'https://typhoon.nmc.cn/web.html', '降雨': 'https://open-meteo.com/'};
+  const url = urls[k];
+  const title = k === '地形' ? ' title="静态底图：等级/高程/历史涝点，无公开实时接口"' : '';
+  const text = k + ' · ' + label;
+  if (url) return '<a class="pill ' + cls + ' link" href="' + url + '" target="_blank" rel="noopener noreferrer">' + text + '</a>';
+  return '<span class="pill ' + cls + '"' + title + '>' + text + '</span>';
 }
 function drawMap(track) {
   const pts = track.points, com = track.community;
